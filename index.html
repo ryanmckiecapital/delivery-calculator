@@ -19,17 +19,13 @@
 }
 
 @media (prefers-color-scheme: dark){
-
 :root{
 --bg:#121212;
 --card:#1e1e1e;
 --text:#f5f5f5;
 --accent:#4f9cff;
 --border:#333;
---profit:#22c55e;
---loss:#ef4444;
 }
-
 }
 
 body{
@@ -54,16 +50,13 @@ border:1px solid var(--border);
 box-shadow:0 6px 14px rgba(0,0,0,0.08);
 }
 
-h1{
-margin-top:0;
-font-size:22px;
-}
+h1{margin-top:0;font-size:22px}
 
 .stat{
 display:flex;
 justify-content:space-between;
-align-items:center;
 margin:6px 0;
+align-items:center;
 }
 
 .total{
@@ -72,14 +65,7 @@ font-size:20px;
 margin-top:10px;
 }
 
-.form-group{
-margin-bottom:12px;
-}
-
-label{
-font-size:13px;
-opacity:.7;
-}
+label{font-size:13px;opacity:.7}
 
 input,select{
 width:100%;
@@ -91,10 +77,6 @@ font-size:16px;
 background:var(--card);
 color:var(--text);
 box-sizing:border-box;
-}
-
-input[type="date"]{
-width:100%;
 }
 
 button{
@@ -114,22 +96,17 @@ padding:10px;
 border-bottom:1px solid var(--border);
 display:flex;
 justify-content:space-between;
-align-items:center;
-font-size:14px;
 }
+
+.small{font-size:12px;opacity:.7}
 
 .delete{
 background:#ef4444;
-border:none;
 color:white;
-padding:6px 10px;
+border:none;
 border-radius:6px;
+padding:6px 10px;
 font-size:12px;
-}
-
-.small{
-font-size:12px;
-opacity:.7;
 }
 
 .gasInput{
@@ -139,14 +116,13 @@ border-radius:6px;
 border:1px solid var(--border);
 }
 
-.profitGreen{
-color:var(--profit);
-font-weight:bold;
-}
+.profitGreen{color:var(--profit);font-weight:bold}
+.profitRed{color:var(--loss);font-weight:bold}
 
-.profitRed{
-color:var(--loss);
+.summary{
+font-size:18px;
 font-weight:bold;
+margin-top:8px;
 }
 
 </style>
@@ -166,7 +142,6 @@ font-weight:bold;
 <div class="stat"><span>Tips</span><span>$<span id="tipsTotal">0</span></span></div>
 
 <div class="stat"><span>Company Payout (Card)</span><span>$<span id="cardPayout">0</span></span></div>
-
 <div class="stat"><span>Cash Owed Company</span><span>$<span id="cashOwed">0</span></span></div>
 
 <div class="stat">
@@ -185,33 +160,49 @@ font-weight:bold;
 
 <div class="card">
 
-<div class="form-group">
-<label>Date</label>
-<input type="date" id="date">
+<h3>Expected Payday Deposit</h3>
+
+<div class="stat">
+<span>15th Payday</span>
+<span>$<span id="pay15">0</span></span>
 </div>
 
-<div class="form-group">
+<div class="stat">
+<span>End of Month Payday</span>
+<span>$<span id="payEnd">0</span></span>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Weekly Earnings</h3>
+
+<div class="summary">
+This Week: $<span id="weekTotal">0</span>
+</div>
+
+</div>
+
+<div class="card">
+
+<label>Date</label>
+<input id="date" type="text">
+
 <label>Delivery Type</label>
 <select id="type">
 <option value="card">Card Delivery</option>
 <option value="cash">Cash Delivery</option>
 </select>
-</div>
 
-<div class="form-group">
 <label>Delivery Fee</label>
 <input id="deliveryFee" type="number">
-</div>
 
-<div class="form-group">
 <label>Tip</label>
 <input id="tip" type="number">
-</div>
 
-<div class="form-group">
 <label>Service Fee (cash only)</label>
 <input id="serviceFee" type="number">
-</div>
 
 <button onclick="addDelivery()">Add Delivery</button>
 
@@ -227,7 +218,6 @@ font-weight:bold;
 <div class="card">
 
 <h3>Delivery History</h3>
-
 <div id="history"></div>
 
 <button onclick="exportCSV()">Export Excel File</button>
@@ -240,19 +230,16 @@ font-weight:bold;
 
 let deliveries = JSON.parse(localStorage.getItem("deliveries")) || []
 
-document.getElementById("date").valueAsDate=new Date()
-
-function payPeriod(){
-
-let today=new Date()
-let day=today.getDate()
-
-if(day<=15){
-return "Pay Period: 1st - 15th"
-}else{
-return "Pay Period: 16th - End"
+function today(){
+let d=new Date()
+return d.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})
 }
 
+document.getElementById("date").value=today()
+
+function payPeriod(){
+let day=new Date().getDate()
+return day<=15 ? "Pay Period: 1st - 15th" : "Pay Period: 16th - End"
 }
 
 document.getElementById("period").innerText=payPeriod()
@@ -284,11 +271,9 @@ render()
 }
 
 function deleteDelivery(i){
-
 deliveries.splice(i,1)
 save()
 render()
-
 }
 
 let chart
@@ -302,20 +287,42 @@ let cashTotal=0
 let tipsTotal=0
 let cashOwed=0
 
+let weekTotal=0
+
+let pay15=0
+let payEnd=0
+
 let daily={}
 
 history.innerHTML=""
 
 deliveries.forEach((d,i)=>{
 
+let dateObj=new Date(d.date)
+
 if(d.type==="card"){
 cardTotal+=d.earning
+
+if(dateObj.getDate()<=15){
+pay15+=d.earning
+}else{
+payEnd+=d.earning
+}
+
 }else{
 cashTotal+=d.earning
 cashOwed+=d.service
 }
 
 tipsTotal+=d.tip
+
+let today=new Date()
+let weekAgo=new Date()
+weekAgo.setDate(today.getDate()-7)
+
+if(dateObj>=weekAgo){
+weekTotal+=d.earning
+}
 
 if(!daily[d.date]) daily[d.date]=0
 daily[d.date]+=d.earning
@@ -326,7 +333,6 @@ history.innerHTML+=`
 <strong>${d.type.toUpperCase()}</strong> - $${d.earning.toFixed(2)}<br>
 <span class="small">${d.date}</span>
 </div>
-
 <button class="delete" onclick="deleteDelivery(${i})">Delete</button>
 </div>
 `
@@ -334,9 +340,7 @@ history.innerHTML+=`
 })
 
 let grand=cardTotal+cashTotal
-
 let gas=parseFloat(document.getElementById("gas").value)||0
-
 let profit=grand-gas
 
 document.getElementById("deliveries").innerText=deliveries.length
@@ -345,22 +349,22 @@ document.getElementById("cashTotal").innerText=cashTotal.toFixed(2)
 document.getElementById("tipsTotal").innerText=tipsTotal.toFixed(2)
 
 document.getElementById("cardPayout").innerText=cardTotal.toFixed(2)
-
 document.getElementById("cashOwed").innerText=cashOwed.toFixed(2)
 
 document.getElementById("grandTotal").innerText=grand.toFixed(2)
 
-let profitElement=document.getElementById("profit")
+document.getElementById("weekTotal").innerText=weekTotal.toFixed(2)
 
-profitElement.innerText=profit.toFixed(2)
+document.getElementById("pay15").innerText=pay15.toFixed(2)
+document.getElementById("payEnd").innerText=payEnd.toFixed(2)
 
-profitElement.classList.remove("profitGreen","profitRed")
+let profitEl=document.getElementById("profit")
 
-if(profit>=0){
-profitElement.classList.add("profitGreen")
-}else{
-profitElement.classList.add("profitRed")
-}
+profitEl.innerText=profit.toFixed(2)
+
+profitEl.classList.remove("profitGreen","profitRed")
+
+profit>=0 ? profitEl.classList.add("profitGreen") : profitEl.classList.add("profitRed")
 
 drawChart(daily)
 

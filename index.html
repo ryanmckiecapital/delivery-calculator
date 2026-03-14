@@ -2,63 +2,145 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Delivery Earnings</title>
 
 <style>
+
+:root{
+--bg:#f2f2f2;
+--card:#ffffff;
+--text:#222;
+--accent:#3b82f6;
+--border:#e4e4e4;
+}
+
+@media (prefers-color-scheme: dark){
+
+:root{
+--bg:#121212;
+--card:#1e1e1e;
+--text:#f5f5f5;
+--accent:#4f9cff;
+--border:#333;
+}
+
+}
+
 body{
-font-family:Arial;
-background:#f2f2f2;
-padding:15px;
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
+background:var(--bg);
+color:var(--text);
+padding:18px;
+}
+
+.container{
+max-width:500px;
+margin:auto;
 }
 
 .card{
-background:white;
-padding:15px;
-border-radius:10px;
-margin-bottom:15px;
+background:var(--card);
+border-radius:14px;
+padding:18px;
+margin-bottom:16px;
+box-shadow:0 6px 14px rgba(0,0,0,0.08);
+border:1px solid var(--border);
 }
 
-input,select,button{
-width:100%;
-padding:10px;
-margin-top:6px;
-font-size:16px;
-}
-
-button{
-background:#2d89ff;
-color:white;
-border:none;
-border-radius:6px;
-}
-
-.delete{
-background:red;
-margin-top:5px;
-}
-
-.delivery{
-border-bottom:1px solid #eee;
-padding:8px 0;
+h1{
+font-size:22px;
+margin-top:0;
 }
 
 h3{
-margin:5px 0;
+margin-top:0;
 }
+
+.stat{
+display:flex;
+justify-content:space-between;
+margin:6px 0;
+font-size:16px;
+}
+
+.total{
+font-size:20px;
+font-weight:bold;
+margin-top:10px;
+}
+
+input,select{
+
+width:100%;
+padding:12px;
+margin-top:8px;
+border-radius:8px;
+border:1px solid var(--border);
+font-size:16px;
+background:var(--card);
+color:var(--text);
+
+}
+
+button{
+
+width:100%;
+margin-top:12px;
+padding:14px;
+font-size:16px;
+border:none;
+border-radius:10px;
+background:var(--accent);
+color:white;
+font-weight:600;
+
+}
+
+button:active{
+transform:scale(.98);
+}
+
+.delivery{
+padding:10px;
+border-bottom:1px solid var(--border);
+display:flex;
+justify-content:space-between;
+align-items:center;
+font-size:15px;
+}
+
+.delete{
+background:#ef4444;
+padding:6px 10px;
+font-size:13px;
+border-radius:6px;
+}
+
+.small{
+font-size:13px;
+opacity:.7;
+}
+
 </style>
 </head>
 
 <body>
 
+<div class="container">
+
 <div class="card">
-<h2 id="period"></h2>
 
-<p>Deliveries: <span id="deliveries">0</span></p>
-<p>Card Earnings: $<span id="cardTotal">0</span></p>
-<p>Cash Earnings: $<span id="cashTotal">0</span></p>
-<p>Tips: $<span id="tipsTotal">0</span></p>
+<h1 id="period"></h1>
 
-<h3>Total Earnings: $<span id="grandTotal">0</span></h3>
+<div class="stat"><span>Deliveries</span><span id="deliveries">0</span></div>
+<div class="stat"><span>Card Earnings</span><span>$<span id="cardTotal">0</span></span></div>
+<div class="stat"><span>Cash Earnings</span><span>$<span id="cashTotal">0</span></span></div>
+<div class="stat"><span>Tips</span><span>$<span id="tipsTotal">0</span></span></div>
+
+<div class="total">Total Earnings: $<span id="grandTotal">0</span></div>
+
 </div>
 
 <div class="card">
@@ -88,16 +170,18 @@ margin:5px 0;
 
 </div>
 
+</div>
+
 <script>
 
 let deliveries = JSON.parse(localStorage.getItem("deliveries")) || []
 
 function payPeriod(){
 
-let today = new Date()
-let day = today.getDate()
+let today=new Date()
+let day=today.getDate()
 
-if(day <= 15){
+if(day<=15){
 return "Pay Period: 1st - 15th"
 }else{
 return "Pay Period: 16th - End"
@@ -105,10 +189,12 @@ return "Pay Period: 16th - End"
 
 }
 
-document.getElementById("period").innerText = payPeriod()
+document.getElementById("period").innerText=payPeriod()
 
 function save(){
+
 localStorage.setItem("deliveries",JSON.stringify(deliveries))
+
 }
 
 function addDelivery(){
@@ -121,7 +207,7 @@ let service=parseFloat(document.getElementById("serviceFee").value)||0
 let companyCut=fee*0.20
 let earning=(fee-companyCut)+tip
 
-if(type=="cash"){
+if(type==="cash"){
 earning-=service
 }
 
@@ -154,7 +240,7 @@ history.innerHTML=""
 
 deliveries.forEach((d,i)=>{
 
-if(d.type=="card"){
+if(d.type==="card"){
 cardTotal+=d.earning
 }else{
 cashTotal+=d.earning
@@ -164,8 +250,13 @@ tipsTotal+=d.tip
 
 history.innerHTML+=`
 <div class="delivery">
-${d.type.toUpperCase()} | Earned $${d.earning.toFixed(2)}
+<div>
+<strong>${d.type.toUpperCase()}</strong><br>
+<span class="small">$${d.earning.toFixed(2)}</span>
+</div>
+
 <button class="delete" onclick="deleteDelivery(${i})">Delete</button>
+
 </div>
 `
 
@@ -187,7 +278,7 @@ let text=JSON.stringify(deliveries,null,2)
 
 navigator.clipboard.writeText(text)
 
-alert("Data copied to clipboard")
+alert("Data copied")
 
 }
 

@@ -55,8 +55,8 @@ h1{margin-top:0;font-size:22px}
 .stat{
 display:flex;
 justify-content:space-between;
-margin:6px 0;
 align-items:center;
+margin:6px 0;
 }
 
 .total{
@@ -65,7 +65,10 @@ font-size:20px;
 margin-top:10px;
 }
 
-label{font-size:13px;opacity:.7}
+label{
+font-size:13px;
+opacity:.7;
+}
 
 input,select{
 width:100%;
@@ -77,6 +80,14 @@ font-size:16px;
 background:var(--card);
 color:var(--text);
 box-sizing:border-box;
+}
+
+/* FIXED DATE INPUT FOR iPHONE */
+input[type="date"]{
+appearance:none;
+-webkit-appearance:none;
+display:block;
+width:100%;
 }
 
 button{
@@ -98,15 +109,18 @@ display:flex;
 justify-content:space-between;
 }
 
-.small{font-size:12px;opacity:.7}
-
 .delete{
 background:#ef4444;
-color:white;
 border:none;
-border-radius:6px;
+color:white;
 padding:6px 10px;
+border-radius:6px;
 font-size:12px;
+}
+
+.small{
+font-size:12px;
+opacity:.7;
 }
 
 .gasInput{
@@ -187,7 +201,7 @@ This Week: $<span id="weekTotal">0</span>
 <div class="card">
 
 <label>Date</label>
-<input id="date" type="text">
+<input id="date" type="date">
 
 <label>Delivery Type</label>
 <select id="type">
@@ -230,12 +244,7 @@ This Week: $<span id="weekTotal">0</span>
 
 let deliveries = JSON.parse(localStorage.getItem("deliveries")) || []
 
-function today(){
-let d=new Date()
-return d.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})
-}
-
-document.getElementById("date").value=today()
+document.getElementById("date").valueAsDate = new Date()
 
 function payPeriod(){
 let day=new Date().getDate()
@@ -286,12 +295,9 @@ let cardTotal=0
 let cashTotal=0
 let tipsTotal=0
 let cashOwed=0
-
 let weekTotal=0
-
 let pay15=0
 let payEnd=0
-
 let daily={}
 
 history.innerHTML=""
@@ -347,19 +353,15 @@ document.getElementById("deliveries").innerText=deliveries.length
 document.getElementById("cardTotal").innerText=cardTotal.toFixed(2)
 document.getElementById("cashTotal").innerText=cashTotal.toFixed(2)
 document.getElementById("tipsTotal").innerText=tipsTotal.toFixed(2)
-
 document.getElementById("cardPayout").innerText=cardTotal.toFixed(2)
 document.getElementById("cashOwed").innerText=cashOwed.toFixed(2)
-
 document.getElementById("grandTotal").innerText=grand.toFixed(2)
 
 document.getElementById("weekTotal").innerText=weekTotal.toFixed(2)
-
 document.getElementById("pay15").innerText=pay15.toFixed(2)
 document.getElementById("payEnd").innerText=payEnd.toFixed(2)
 
 let profitEl=document.getElementById("profit")
-
 profitEl.innerText=profit.toFixed(2)
 
 profitEl.classList.remove("profitGreen","profitRed")

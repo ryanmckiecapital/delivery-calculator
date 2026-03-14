@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delivery Earnings</title>
+
+<style>
+body{
+font-family:Arial;
+background:#f2f2f2;
+padding:15px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+margin-bottom:15px;
+}
+
+input,select,button{
+width:100%;
+padding:10px;
+margin-top:6px;
+font-size:16px;
+}
+
+button{
+background:#2d89ff;
+color:white;
+border:none;
+border-radius:6px;
+}
+
+.delete{
+background:red;
+margin-top:5px;
+}
+
+.delivery{
+border-bottom:1px solid #eee;
+padding:8px 0;
+}
+
+h3{
+margin:5px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h2 id="period"></h2>
+
+<p>Deliveries: <span id="deliveries">0</span></p>
+<p>Card Earnings: $<span id="cardTotal">0</span></p>
+<p>Cash Earnings: $<span id="cashTotal">0</span></p>
+<p>Tips: $<span id="tipsTotal">0</span></p>
+
+<h3>Total Earnings: $<span id="grandTotal">0</span></h3>
+</div>
+
+<div class="card">
+
+<select id="type">
+<option value="card">Card Delivery</option>
+<option value="cash">Cash Delivery</option>
+</select>
+
+<input id="deliveryFee" placeholder="Delivery Fee">
+
+<input id="tip" placeholder="Tip">
+
+<input id="serviceFee" placeholder="Service Fee (cash only)">
+
+<button onclick="addDelivery()">Add Delivery</button>
+
+</div>
+
+<div class="card">
+
+<h3>Delivery History</h3>
+
+<div id="history"></div>
+
+<button onclick="exportData()">Export Data</button>
+
+</div>
+
+<script>
+
+let deliveries = JSON.parse(localStorage.getItem("deliveries")) || []
+
+function payPeriod(){
+
+let today = new Date()
+let day = today.getDate()
+
+if(day <= 15){
+return "Pay Period: 1st - 15th"
+}else{
+return "Pay Period: 16th - End"
+}
+
+}
+
+document.getElementById("period").innerText = payPeriod()
+
+function save(){
+localStorage.setItem("deliveries",JSON.stringify(deliveries))
+}
+
+function addDelivery(){
+
+let type=document.getElementById("type").value
+let fee=parseFloat(document.getElementById("deliveryFee").value)||0
+let tip=parseFloat(document.getElementById("tip").value)||0
+let service=parseFloat(document.getElementById("serviceFee").value)||0
+
+let companyCut=fee*0.20
+let earning=(fee-companyCut)+tip
+
+if(type=="cash"){
+earning-=service
+}
+
+deliveries.push({
+type,fee,tip,service,earning
+})
+
+save()
+render()
+
+}
+
+function deleteDelivery(i){
+
+deliveries.splice(i,1)
+save()
+render()
+
+}
+
+function render(){
+
+let history=document.getElementById("history")
+
+let cardTotal=0
+let cashTotal=0
+let tipsTotal=0
+
+history.innerHTML=""
+
+deliveries.forEach((d,i)=>{
+
+if(d.type=="card"){
+cardTotal+=d.earning
+}else{
+cashTotal+=d.earning
+}
+
+tipsTotal+=d.tip
+
+history.innerHTML+=`
+<div class="delivery">
+${d.type.toUpperCase()} | Earned $${d.earning.toFixed(2)}
+<button class="delete" onclick="deleteDelivery(${i})">Delete</button>
+</div>
+`
+
+})
+
+let grand=cardTotal+cashTotal
+
+document.getElementById("deliveries").innerText=deliveries.length
+document.getElementById("cardTotal").innerText=cardTotal.toFixed(2)
+document.getElementById("cashTotal").innerText=cashTotal.toFixed(2)
+document.getElementById("tipsTotal").innerText=tipsTotal.toFixed(2)
+document.getElementById("grandTotal").innerText=grand.toFixed(2)
+
+}
+
+function exportData(){
+
+let text=JSON.stringify(deliveries,null,2)
+
+navigator.clipboard.writeText(text)
+
+alert("Data copied to clipboard")
+
+}
+
+render()
+
+</script>
+
+</body>
+</html>

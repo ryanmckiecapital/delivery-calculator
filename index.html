@@ -14,6 +14,8 @@
 --text:#222;
 --accent:#3b82f6;
 --border:#e5e5e5;
+--profit:#22c55e;
+--loss:#ef4444;
 }
 
 @media (prefers-color-scheme: dark){
@@ -24,6 +26,8 @@
 --text:#f5f5f5;
 --accent:#4f9cff;
 --border:#333;
+--profit:#22c55e;
+--loss:#ef4444;
 }
 
 }
@@ -58,6 +62,7 @@ font-size:22px;
 .stat{
 display:flex;
 justify-content:space-between;
+align-items:center;
 margin:6px 0;
 }
 
@@ -68,7 +73,7 @@ margin-top:10px;
 }
 
 .form-group{
-margin-bottom:10px;
+margin-bottom:12px;
 }
 
 label{
@@ -86,6 +91,10 @@ font-size:16px;
 background:var(--card);
 color:var(--text);
 box-sizing:border-box;
+}
+
+input[type="date"]{
+width:100%;
 }
 
 button{
@@ -124,10 +133,20 @@ opacity:.7;
 }
 
 .gasInput{
-width:100px;
+width:90px;
 padding:6px;
 border-radius:6px;
 border:1px solid var(--border);
+}
+
+.profitGreen{
+color:var(--profit);
+font-weight:bold;
+}
+
+.profitRed{
+color:var(--loss);
+font-weight:bold;
 }
 
 </style>
@@ -155,7 +174,10 @@ border:1px solid var(--border);
 <span>$ <input id="gas" class="gasInput" type="number" value="0"></span>
 </div>
 
-<div class="stat"><span>Profit After Gas</span><span>$<span id="profit">0</span></span></div>
+<div class="stat">
+<span>Profit After Gas</span>
+<span>$<span id="profit">0</span></span>
+</div>
 
 <div class="total">Total Earnings: $<span id="grandTotal">0</span></div>
 
@@ -328,7 +350,17 @@ document.getElementById("cashOwed").innerText=cashOwed.toFixed(2)
 
 document.getElementById("grandTotal").innerText=grand.toFixed(2)
 
-document.getElementById("profit").innerText=profit.toFixed(2)
+let profitElement=document.getElementById("profit")
+
+profitElement.innerText=profit.toFixed(2)
+
+profitElement.classList.remove("profitGreen","profitRed")
+
+if(profit>=0){
+profitElement.classList.add("profitGreen")
+}else{
+profitElement.classList.add("profitRed")
+}
 
 drawChart(daily)
 

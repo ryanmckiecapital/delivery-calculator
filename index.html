@@ -2,8 +2,9 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driver Earnings Dashboard</title>
 
-<title>Delivery Earnings</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
@@ -12,7 +13,7 @@
 --card:#ffffff;
 --text:#222;
 --accent:#3b82f6;
---border:#e4e4e4;
+--border:#e5e5e5;
 }
 
 @media (prefers-color-scheme: dark){
@@ -36,7 +37,7 @@ padding:18px;
 }
 
 .container{
-max-width:500px;
+max-width:520px;
 margin:auto;
 }
 
@@ -45,47 +46,49 @@ background:var(--card);
 border-radius:14px;
 padding:18px;
 margin-bottom:16px;
-box-shadow:0 6px 14px rgba(0,0,0,0.08);
 border:1px solid var(--border);
+box-shadow:0 6px 14px rgba(0,0,0,0.08);
 }
 
 h1{
+margin-top:0;
 font-size:22px;
-margin-top:0;
-}
-
-h3{
-margin-top:0;
 }
 
 .stat{
 display:flex;
 justify-content:space-between;
 margin:6px 0;
-font-size:16px;
 }
 
 .total{
-font-size:20px;
 font-weight:bold;
+font-size:20px;
 margin-top:10px;
 }
 
-input,select{
+.form-group{
+margin-bottom:10px;
+}
 
+label{
+font-size:13px;
+opacity:.7;
+}
+
+input,select{
 width:100%;
 padding:12px;
-margin-top:8px;
+margin-top:4px;
 border-radius:8px;
 border:1px solid var(--border);
 font-size:16px;
 background:var(--card);
 color:var(--text);
-
+box-sizing:border-box;
 }
 
 button{
-
 width:100%;
 margin-top:12px;
 padding:14px;
@@ -95,11 +98,6 @@ border-radius:10px;
 background:var(--accent);
 color:white;
 font-weight:600;
-
-}
-
-button:active{
-transform:scale(.98);
 }
 
 .delivery{
@@ -108,19 +106,28 @@ border-bottom:1px solid var(--border);
 display:flex;
 justify-content:space-between;
 align-items:center;
-font-size:15px;
+font-size:14px;
 }
 
 .delete{
 background:#ef4444;
+border:none;
+color:white;
 padding:6px 10px;
-font-size:13px;
 border-radius:6px;
+font-size:12px;
 }
 
 .small{
-font-size:13px;
+font-size:12px;
 opacity:.7;
+}
+
+.gasInput{
+width:100px;
+padding:6px;
+border-radius:6px;
+border:1px solid var(--border);
 }
 
 </style>
@@ -139,24 +146,59 @@ opacity:.7;
 <div class="stat"><span>Cash Earnings</span><span>$<span id="cashTotal">0</span></span></div>
 <div class="stat"><span>Tips</span><span>$<span id="tipsTotal">0</span></span></div>
 
+<div class="stat"><span>Company Payout (Card)</span><span>$<span id="cardPayout">0</span></span></div>
+
+<div class="stat"><span>Cash Owed Company</span><span>$<span id="cashOwed">0</span></span></div>
+
+<div class="stat">
+<span>Gas Expense</span>
+<span>$ <input id="gas" class="gasInput" type="number" value="0"></span>
+</div>
+
+<div class="stat"><span>Profit After Gas</span><span>$<span id="profit">0</span></span></div>
+
 <div class="total">Total Earnings: $<span id="grandTotal">0</span></div>
 
 </div>
 
 <div class="card">
 
+<div class="form-group">
+<label>Date</label>
+<input type="date" id="date">
+</div>
+
+<div class="form-group">
+<label>Delivery Type</label>
 <select id="type">
 <option value="card">Card Delivery</option>
 <option value="cash">Cash Delivery</option>
 </select>
+</div>
 
-<input id="deliveryFee" placeholder="Delivery Fee">
+<div class="form-group">
+<label>Delivery Fee</label>
+<input id="deliveryFee" type="number">
+</div>
 
-<input id="tip" placeholder="Tip">
+<div class="form-group">
+<label>Tip</label>
+<input id="tip" type="number">
+</div>
 
-<input id="serviceFee" placeholder="Service Fee (cash only)">
+<div class="form-group">
+<label>Service Fee (cash only)</label>
+<input id="serviceFee" type="number">
+</div>
 
 <button onclick="addDelivery()">Add Delivery</button>
+
+</div>
+
+<div class="card">
+
+<h3>Earnings Chart</h3>
+<canvas id="chart"></canvas>
 
 </div>
 
@@ -166,7 +208,7 @@ opacity:.7;
 
 <div id="history"></div>
 
-<button onclick="exportData()">Export Data</button>
+<button onclick="exportCSV()">Export Excel File</button>
 
 </div>
 
@@ -175,6 +217,8 @@ opacity:.7;
 <script>
 
 let deliveries = JSON.parse(localStorage.getItem("deliveries")) || []
+
+document.getElementById("date").valueAsDate=new Date()
 
 function payPeriod(){
 
@@ -192,13 +236,12 @@ return "Pay Period: 16th - End"
 document.getElementById("period").innerText=payPeriod()
 
 function save(){
-
 localStorage.setItem("deliveries",JSON.stringify(deliveries))
-
 }
 
 function addDelivery(){
 
+let date=document.getElementById("date").value
 let type=document.getElementById("type").value
 let fee=parseFloat(document.getElementById("deliveryFee").value)||0
 let tip=parseFloat(document.getElementById("tip").value)||0
@@ -211,9 +254,7 @@ if(type==="cash"){
 earning-=service
 }
 
-deliveries.push({
-type,fee,tip,service,earning
-})
+deliveries.push({date,type,fee,tip,service,earning})
 
 save()
 render()
@@ -228,6 +269,8 @@ render()
 
 }
 
+let chart
+
 function render(){
 
 let history=document.getElementById("history")
@@ -235,6 +278,9 @@ let history=document.getElementById("history")
 let cardTotal=0
 let cashTotal=0
 let tipsTotal=0
+let cashOwed=0
+
+let daily={}
 
 history.innerHTML=""
 
@@ -244,19 +290,22 @@ if(d.type==="card"){
 cardTotal+=d.earning
 }else{
 cashTotal+=d.earning
+cashOwed+=d.service
 }
 
 tipsTotal+=d.tip
 
+if(!daily[d.date]) daily[d.date]=0
+daily[d.date]+=d.earning
+
 history.innerHTML+=`
 <div class="delivery">
 <div>
-<strong>${d.type.toUpperCase()}</strong><br>
-<span class="small">$${d.earning.toFixed(2)}</span>
+<strong>${d.type.toUpperCase()}</strong> - $${d.earning.toFixed(2)}<br>
+<span class="small">${d.date}</span>
 </div>
 
 <button class="delete" onclick="deleteDelivery(${i})">Delete</button>
-
 </div>
 `
 
@@ -264,23 +313,66 @@ history.innerHTML+=`
 
 let grand=cardTotal+cashTotal
 
+let gas=parseFloat(document.getElementById("gas").value)||0
+
+let profit=grand-gas
+
 document.getElementById("deliveries").innerText=deliveries.length
 document.getElementById("cardTotal").innerText=cardTotal.toFixed(2)
 document.getElementById("cashTotal").innerText=cashTotal.toFixed(2)
 document.getElementById("tipsTotal").innerText=tipsTotal.toFixed(2)
+
+document.getElementById("cardPayout").innerText=cardTotal.toFixed(2)
+
+document.getElementById("cashOwed").innerText=cashOwed.toFixed(2)
+
 document.getElementById("grandTotal").innerText=grand.toFixed(2)
 
-}
+document.getElementById("profit").innerText=profit.toFixed(2)
 
-function exportData(){
-
-let text=JSON.stringify(deliveries,null,2)
-
-navigator.clipboard.writeText(text)
-
-alert("Data copied")
+drawChart(daily)
 
 }
+
+function drawChart(data){
+
+let labels=Object.keys(data)
+let values=Object.values(data)
+
+if(chart) chart.destroy()
+
+chart=new Chart(document.getElementById("chart"),{
+type:"bar",
+data:{
+labels:labels,
+datasets:[{
+label:"Daily Earnings",
+data:values
+}]
+}
+})
+
+}
+
+function exportCSV(){
+
+let csv="Date,Type,Delivery Fee,Tip,Service Fee,Earnings\n"
+
+deliveries.forEach(d=>{
+csv+=`${d.date},${d.type},${d.fee},${d.tip},${d.service},${d.earning}\n`
+})
+
+let blob=new Blob([csv],{type:"text/csv"})
+let url=URL.createObjectURL(blob)
+
+let a=document.createElement("a")
+a.href=url
+a.download="deliveries.csv"
+a.click()
+
+}
+
+document.getElementById("gas").addEventListener("input",render)
 
 render()
 

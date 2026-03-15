@@ -65,7 +65,6 @@ margin-top:10px;
 
 input,select{
 width:100%;
-max-width:100%;
 padding:12px;
 border-radius:10px;
 border:1px solid var(--border);
@@ -73,12 +72,7 @@ margin-top:6px;
 background:#111;
 color:white;
 box-sizing:border-box;
-}
-
-input[type="date"]{
-appearance:none;
--webkit-appearance:none;
-width:100%;
+font-size:16px;
 }
 
 button{
@@ -90,15 +84,50 @@ margin-top:10px;
 background:linear-gradient(45deg,#4f9cff,#2563eb);
 color:white;
 font-weight:bold;
-font-size:15px;
+font-size:16px;
+}
+
+.dashboard{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+margin-bottom:10px;
+}
+
+.dashboard div{
+background:#111;
+padding:10px;
+border-radius:10px;
+text-align:center;
 }
 
 .delivery{
+position:relative;
+overflow:hidden;
 border-bottom:1px solid var(--border);
-padding:12px 0;
+}
+
+.deliveryContent{
+padding:14px;
+background:var(--card);
 display:flex;
 justify-content:space-between;
 align-items:center;
+transition:transform .3s;
+}
+
+.deleteBtn{
+position:absolute;
+right:0;
+top:0;
+bottom:0;
+width:80px;
+background:var(--red);
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:bold;
 }
 
 .badge{
@@ -110,16 +139,6 @@ font-weight:bold;
 
 .cash{background:var(--cash)}
 .cardbadge{background:var(--cardblue)}
-
-.historyButtons{
-display:flex;
-gap:6px;
-}
-
-.historyButtons button{
-width:auto;
-padding:6px 10px;
-}
 
 .pagination{
 display:flex;
@@ -137,18 +156,14 @@ padding:6px 10px;
 .profitGreen{color:var(--green);font-weight:bold;}
 .profitRed{color:var(--red);font-weight:bold;}
 
-.dashboard{
-display:grid;
-grid-template-columns:1fr 1fr;
+.tools{
+display:flex;
 gap:10px;
-margin-bottom:10px;
+margin-top:10px;
 }
 
-.dashboard div{
-background:#111;
-padding:10px;
-border-radius:10px;
-text-align:center;
+.tools button{
+flex:1;
 }
 
 </style>
@@ -187,16 +202,28 @@ Deliveries<br>
 </div>
 
 <div class="stat"><span>Card Earnings</span><span>$<span id="cardTotal">0</span></span></div>
-
 <div class="stat"><span>Cash Earnings</span><span>$<span id="cashTotal">0</span></span></div>
-
 <div class="stat"><span>Tips</span><span>$<span id="tipsTotal">0</span></span></div>
 
-<div class="stat"><span>Gas</span><span>$ <input id="gas" type="number" value="0"></span></div>
+<div class="stat">
+<span>Gas</span>
+<span>$ <input id="gas" type="number" value="0"></span>
+</div>
 
 <div class="stat"><span>Profit After Gas</span><span>$<span id="profit">0</span></span></div>
 
 <div class="total">Total Earnings: $<span id="grandTotal">0</span></div>
+
+</div>
+
+
+<div class="card">
+
+<h3>Company Pay Period</h3>
+
+<div class="stat"><span>1st – 15th Payout</span><span>$<span id="pay1">0</span></span></div>
+
+<div class="stat"><span>16th – End Payout</span><span>$<span id="pay2">0</span></span></div>
 
 </div>
 
@@ -228,15 +255,6 @@ Deliveries<br>
 
 <div class="card">
 
-<h3>Earnings Chart</h3>
-
-<canvas id="chart"></canvas>
-
-</div>
-
-
-<div class="card">
-
 <h3>Delivery History</h3>
 
 <div id="history"></div>
@@ -244,10 +262,25 @@ Deliveries<br>
 <div class="pagination">
 
 <button class="pagebtn" onclick="prevPage()">⬅</button>
-
 <span id="pageInfo"></span>
-
 <button class="pagebtn" onclick="nextPage()">➡</button>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>Backup</h3>
+
+<div class="tools">
+
+<button onclick="exportData()">Export</button>
+
+<button onclick="document.getElementById('importFile').click()">Import</button>
+
+<input id="importFile" type="file" style="display:none" onchange="importData(event)">
 
 </div>
 
@@ -325,6 +358,42 @@ tx.oncomplete=loadData
 
 }
 
+function exportData(){
+
+let blob=new Blob([JSON.stringify(deliveries)],{type:"application/json"})
+
+let url=URL.createObjectURL(blob)
+
+let a=document.createElement("a")
+a.href=url
+a.download="driver_backup.json"
+a.click()
+
+}
+
+function importData(event){
+
+let file=event.target.files[0]
+
+let reader=new FileReader()
+
+reader.onload=function(e){
+
+let imported=JSON.parse(e.target.result)
+
+let tx=db.transaction("deliveries","readwrite")
+let store=tx.objectStore("deliveries")
+
+imported.forEach(d=>store.add(d))
+
+tx.oncomplete=loadData
+
+}
+
+reader.readAsText(file)
+
+}
+
 function render(){
 
 let start=(currentPage-1)*perPage
@@ -338,14 +407,8 @@ let cashTotal=0
 let tipsTotal=0
 let serviceTotal=0
 
-let today=0
-let week=0
-
-let daily={}
-
-let now=new Date()
-let weekStart=new Date()
-weekStart.setDate(now.getDate()-7)
+let pay1=0
+let pay2=0
 
 page.forEach(d=>{
 
@@ -356,21 +419,21 @@ history.innerHTML+=`
 
 <div class="delivery">
 
+<div class="deleteBtn" onclick="deleteDelivery(${d.id})">
+Delete
+</div>
+
+<div class="deliveryContent" ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)">
+
 <div>
 
 <span class="badge ${badge}">${label}</span>
 
-<strong>$${d.earning.toFixed(2)}</strong>
-
-<br>
+<strong>$${d.earning.toFixed(2)}</strong><br>
 
 <small>${d.date}</small>
 
 </div>
-
-<div class="historyButtons">
-
-<button onclick="deleteDelivery(${d.id})">Delete</button>
 
 </div>
 
@@ -382,22 +445,20 @@ history.innerHTML+=`
 
 deliveries.forEach(d=>{
 
-if(d.type==="card") cardTotal+=d.earning
-else{
+if(d.type==="card"){
+cardTotal+=d.earning
+
+let day=new Date(d.date).getDate()
+
+if(day<=15) pay1+=d.earning
+else pay2+=d.earning
+
+}else{
 cashTotal+=d.earning
 serviceTotal+=d.service
 }
 
 tipsTotal+=d.tip
-
-if(!daily[d.date]) daily[d.date]=0
-daily[d.date]+=d.earning
-
-let dDate=new Date(d.date)
-
-if(d.date===now.toISOString().slice(0,10)) today+=d.earning
-
-if(dDate>=weekStart) week+=d.earning
 
 })
 
@@ -411,19 +472,20 @@ document.getElementById("cashTotal").innerText=cashTotal.toFixed(2)
 document.getElementById("tipsTotal").innerText=tipsTotal.toFixed(2)
 document.getElementById("grandTotal").innerText=grand.toFixed(2)
 
-document.getElementById("today").innerText=today.toFixed(2)
-document.getElementById("week").innerText=week.toFixed(2)
 document.getElementById("deliveries").innerText=deliveries.length
 document.getElementById("companyPayout").innerText=companyPayout.toFixed(2)
+
+document.getElementById("pay1").innerText=pay1.toFixed(2)
+document.getElementById("pay2").innerText=pay2.toFixed(2)
 
 let profitEl=document.getElementById("profit")
 profitEl.innerText=profit.toFixed(2)
 profitEl.className=profit>=0?"profitGreen":"profitRed"
 
-drawChart(daily)
-
 let pages=Math.ceil(deliveries.length/perPage)||1
 document.getElementById("pageInfo").innerText=`Page ${currentPage}/${pages}`
+
+enableSwipe()
 
 }
 
@@ -442,26 +504,25 @@ render()
 }
 }
 
-let chart
+let startX=0
 
-function drawChart(data){
-
-let labels=Object.keys(data)
-let values=Object.values(data)
-
-if(chart) chart.destroy()
-
-chart=new Chart(document.getElementById("chart"),{
-
-type:"bar",
-
-data:{
-labels:labels,
-datasets:[{label:"Daily Earnings",data:values}]
+function touchStart(e){
+startX=e.touches[0].clientX
 }
 
-})
+function touchMove(e){
+let moveX=e.touches[0].clientX
+let diff=startX-moveX
 
+if(diff>30){
+e.currentTarget.style.transform="translateX(-80px)"
+}
+}
+
+function touchEnd(e){
+}
+
+function enableSwipe(){
 }
 
 document.getElementById("gas").addEventListener("input",render)

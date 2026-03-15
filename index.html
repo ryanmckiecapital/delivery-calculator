@@ -65,6 +65,7 @@ margin-top:10px;
 
 input,select{
 width:100%;
+max-width:100%;
 padding:12px;
 border-radius:10px;
 border:1px solid var(--border);
@@ -72,6 +73,12 @@ margin-top:6px;
 background:#111;
 color:white;
 box-sizing:border-box;
+}
+
+input[type="date"]{
+appearance:none;
+-webkit-appearance:none;
+width:100%;
 }
 
 button{
@@ -244,14 +251,6 @@ Deliveries<br>
 
 </div>
 
-<button onclick="exportCSV()">Export Excel</button>
-
-<button onclick="exportBackup()">Export Backup</button>
-
-<input type="file" id="importFile" style="display:none">
-
-<button onclick="document.getElementById('importFile').click()">Import Backup</button>
-
 </div>
 
 </div>
@@ -310,40 +309,18 @@ if(type==="cash") earning-=service
 
 saveDelivery({date,type,fee,tip,service,earning})
 
+document.getElementById("deliveryFee").value=""
+document.getElementById("tip").value=""
+document.getElementById("serviceFee").value=""
+
+document.getElementById("deliveryFee").focus()
+
 }
 
 function deleteDelivery(id){
 
 let tx=db.transaction("deliveries","readwrite")
 tx.objectStore("deliveries").delete(id)
-tx.oncomplete=loadData
-
-}
-
-function editDelivery(d){
-
-let newDate=prompt("Edit date",d.date)
-let newFee=prompt("Delivery fee",d.fee)
-let newTip=prompt("Tip",d.tip)
-let newService=prompt("Service fee",d.service)
-
-let companyCut=newFee*0.20
-let earning=(newFee-companyCut)+parseFloat(newTip||0)
-
-if(d.type==="cash") earning-=parseFloat(newService||0)
-
-let tx=db.transaction("deliveries","readwrite")
-
-tx.objectStore("deliveries").put({
-id:d.id,
-date:newDate,
-type:d.type,
-fee:parseFloat(newFee),
-tip:parseFloat(newTip),
-service:parseFloat(newService),
-earning
-})
-
 tx.oncomplete=loadData
 
 }
@@ -392,8 +369,6 @@ history.innerHTML+=`
 </div>
 
 <div class="historyButtons">
-
-<button onclick='editDelivery(${JSON.stringify(d)})'>Edit</button>
 
 <button onclick="deleteDelivery(${d.id})">Delete</button>
 
@@ -453,22 +428,18 @@ document.getElementById("pageInfo").innerText=`Page ${currentPage}/${pages}`
 }
 
 function nextPage(){
-
 let pages=Math.ceil(deliveries.length/perPage)
 if(currentPage<pages){
 currentPage++
 render()
 }
-
 }
 
 function prevPage(){
-
 if(currentPage>1){
 currentPage--
 render()
 }
-
 }
 
 let chart
@@ -492,58 +463,6 @@ datasets:[{label:"Daily Earnings",data:values}]
 })
 
 }
-
-function exportCSV(){
-
-let csv="Date,Type,Fee,Tip,Service,Earnings\n"
-
-deliveries.forEach(d=>{
-csv+=`${d.date},${d.type},${d.fee},${d.tip},${d.service},${d.earning}\n`
-})
-
-let blob=new Blob([csv])
-let url=URL.createObjectURL(blob)
-
-let a=document.createElement("a")
-a.href=url
-a.download="deliveries.csv"
-a.click()
-
-}
-
-function exportBackup(){
-
-let blob=new Blob([JSON.stringify(deliveries)])
-let url=URL.createObjectURL(blob)
-
-let a=document.createElement("a")
-a.href=url
-a.download="backup.json"
-a.click()
-
-}
-
-document.getElementById("importFile").addEventListener("change",function(){
-
-let file=this.files[0]
-let reader=new FileReader()
-
-reader.onload=e=>{
-
-let data=JSON.parse(e.target.result)
-
-let tx=db.transaction("deliveries","readwrite")
-let store=tx.objectStore("deliveries")
-
-data.forEach(d=>store.add(d))
-
-tx.oncomplete=loadData
-
-}
-
-reader.readAsText(file)
-
-})
 
 document.getElementById("gas").addEventListener("input",render)
 

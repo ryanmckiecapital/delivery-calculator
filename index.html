@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Driver Earnings Tracker</title>
 
 <style>
@@ -15,6 +17,10 @@
 --red:#ef4444;
 --cash:#16a34a;
 --cardblue:#2563eb;
+}
+
+*{
+box-sizing:border-box;
 }
 
 body{
@@ -39,7 +45,7 @@ border-radius:16px;
 padding:18px;
 border:1px solid var(--border);
 width:100%;
-box-sizing:border-box;
+overflow:hidden;
 }
 
 h1,h3{
@@ -64,7 +70,6 @@ margin-top:10px;
 }
 
 input,select{
-display:block;
 width:100%;
 padding:12px;
 border-radius:10px;
@@ -72,8 +77,16 @@ border:1px solid var(--border);
 margin-top:6px;
 background:#111;
 color:white;
-box-sizing:border-box;
 font-size:16px;
+}
+
+.date-wrapper{
+width:100%;
+position:relative;
+}
+
+.date-wrapper input{
+width:100%;
 }
 
 button{
@@ -103,32 +116,11 @@ text-align:center;
 }
 
 .delivery{
-position:relative;
 border-bottom:1px solid var(--border);
-overflow:hidden;
-}
-
-.deliveryContent{
-padding:14px;
-background:var(--card);
+padding:10px 0;
 display:flex;
 justify-content:space-between;
 align-items:center;
-transition:transform .25s;
-}
-
-.deleteBtn{
-position:absolute;
-right:0;
-top:0;
-bottom:0;
-width:80px;
-background:var(--red);
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:bold;
 }
 
 .badge{
@@ -140,21 +132,6 @@ font-weight:bold;
 
 .cash{background:var(--cash)}
 .cardbadge{background:var(--cardblue)}
-
-.pagination{
-display:flex;
-justify-content:center;
-gap:10px;
-margin-top:10px;
-}
-
-.pagebtn{
-width:auto;
-padding:6px 10px;
-}
-
-.profitGreen{color:var(--green);font-weight:bold;}
-.profitRed{color:var(--red);font-weight:bold;}
 
 .chart{
 margin-top:10px;
@@ -179,6 +156,9 @@ left:50%;
 transform:translateX(-50%);
 }
 
+.profitGreen{color:var(--green);font-weight:bold;}
+.profitRed{color:var(--red);font-weight:bold;}
+
 </style>
 </head>
 
@@ -192,8 +172,6 @@ transform:translateX(-50%);
 
 <div class="dashboard">
 
-<div>Today<br><strong id="today">0</strong></div>
-<div>This Week<br><strong id="week">0</strong></div>
 <div>Company Payout<br><strong id="companyPayout">0</strong></div>
 <div>Deliveries<br><strong id="deliveries">0</strong></div>
 
@@ -216,6 +194,13 @@ transform:translateX(-50%);
 
 <div class="card">
 
+<h3>Daily Earnings</h3>
+<div id="chart" class="chart"></div>
+
+</div>
+
+<div class="card">
+
 <h3>Company Pay Period</h3>
 
 <div class="stat"><span>1–15 Payout</span><span>$<span id="pay1">0</span></span></div>
@@ -226,7 +211,10 @@ transform:translateX(-50%);
 <div class="card">
 
 <label>Date</label>
+
+<div class="date-wrapper">
 <input id="date" type="date">
+</div>
 
 <label>Delivery Type</label>
 <select id="type">
@@ -336,6 +324,8 @@ let serviceTotal=0
 let pay1=0
 let pay2=0
 
+let dailyTotals={}
+
 deliveries.forEach(d=>{
 
 let badge=d.type==="cash"?"cash":"cardbadge"
@@ -344,10 +334,6 @@ let label=d.type==="cash"?"CASH":"CARD"
 history.innerHTML+=`
 
 <div class="delivery">
-
-<div class="deleteBtn" onclick="deleteDelivery(${d.id})">Delete</div>
-
-<div class="deliveryContent">
 
 <div>
 
@@ -358,7 +344,7 @@ history.innerHTML+=`
 
 </div>
 
-</div>
+<button onclick="deleteDelivery(${d.id})">Delete</button>
 
 </div>
 
@@ -381,6 +367,26 @@ serviceTotal+=d.service
 }
 
 tipsTotal+=d.tip
+
+if(!dailyTotals[d.date]) dailyTotals[d.date]=0
+dailyTotals[d.date]+=d.earning
+
+})
+
+let chart=document.getElementById("chart")
+chart.innerHTML=""
+
+let max=Math.max(...Object.values(dailyTotals),10)
+
+Object.entries(dailyTotals).slice(-7).forEach(([date,total])=>{
+
+let height=(total/max)*120
+
+chart.innerHTML+=`
+<div class="bar" style="height:${height}px">
+<span>${new Date(date).getDate()}</span>
+</div>
+`
 
 })
 

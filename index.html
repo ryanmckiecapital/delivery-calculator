@@ -4,7 +4,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Karibites Earnings Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -35,19 +37,71 @@
     color: var(--text);
     font-family: var(--font-body);
     min-height: 100vh;
+    min-height: -webkit-fill-available;
     background-image: radial-gradient(ellipse at 20% 0%, rgba(249,115,22,0.08) 0%, transparent 60%),
                       radial-gradient(ellipse at 80% 100%, rgba(34,197,94,0.05) 0%, transparent 60%);
     transition: background-color 0.3s, color 0.3s;
+    padding-bottom: env(safe-area-inset-bottom);
   }
+
+/* ─── Backup Bar ─────────────────────── */
+.backup-bar {
+background: var(–surface);
+border-bottom: 1px solid var(–border);
+padding: 10px 20px;
+padding-left: max(20px, env(safe-area-inset-left));
+padding-right: max(20px, env(safe-area-inset-right));
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 8px;
+width: 100%;
+}
+.backup-label { font-size: 0.72rem; color: var(–muted); }
+.backup-label strong { color: var(–text); display: block; font-size: 0.78rem; }
+.backup-btns { display: flex; gap: 8px; }
+.btn-export {
+padding: 8px 14px;
+border-radius: 10px;
+background: rgba(34,197,94,0.15);
+border: 1px solid rgba(34,197,94,0.4);
+color: var(–green);
+font-family: var(–font-body);
+font-size: 0.8rem;
+font-weight: 600;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+white-space: nowrap;
+}
+.btn-export:active { opacity: 0.75; }
+.btn-import {
+padding: 8px 14px;
+border-radius: 10px;
+background: rgba(96,165,250,0.15);
+border: 1px solid rgba(96,165,250,0.4);
+color: #60a5fa;
+font-family: var(–font-body);
+font-size: 0.8rem;
+font-weight: 600;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+white-space: nowrap;
+}
+.btn-import:active { opacity: 0.75; }
+/* Hidden file input */
+#importFile { display: none; }
 
 /* ─── Header ─────────────────────────── */
 header {
-padding: 20px 20px 0;
+padding: 16px 20px 0;
+padding-left: max(20px, env(safe-area-inset-left));
+padding-right: max(20px, env(safe-area-inset-right));
 display: flex;
 align-items: center;
 justify-content: space-between;
 max-width: 900px;
 margin: 0 auto;
+width: 100%;
 }
 .logo { display: flex; align-items: center; gap: 10px; }
 .logo-icon {
@@ -63,23 +117,36 @@ font-size: 20px;
 .header-date strong { color: var(–text); display: block; font-size: 0.9rem; }
 
 /* ─── Layout ──────────────────────────── */
-main { max-width: 900px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.backup-wrap { max-width: 900px; margin: 0 auto; width: 100%; }
+main {
+max-width: 900px;
+margin: 0 auto;
+padding: 16px 16px 40px;
+padding-left: max(16px, env(safe-area-inset-left));
+padding-right: max(16px, env(safe-area-inset-right));
+display: flex;
+flex-direction: column;
+gap: 16px;
+width: 100%;
+}
 
 /* ─── Cards ───────────────────────────── */
 .card {
 background: var(–surface);
 border: 1px solid var(–border);
 border-radius: var(–card-r);
-padding: 20px;
+padding: 16px;
+width: 100%;
 }
 .card-title {
 font-family: var(–font-head);
 font-size: 1rem;
 font-weight: 700;
-margin-bottom: 16px;
+margin-bottom: 14px;
 display: flex;
 align-items: center;
 gap: 8px;
+flex-wrap: wrap;
 }
 .card-title .badge {
 font-family: var(–font-body);
@@ -94,7 +161,7 @@ text-transform: uppercase;
 }
 
 /* ─── Summary Strip ───────────────────── */
-.summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 @media(min-width:600px){ .summary-grid { grid-template-columns: repeat(4, 1fr); } }
 .sum-box {
 background: var(–surface2);
@@ -124,7 +191,7 @@ border-radius: 12px 12px 0 0;
 .sum-sub { font-size: 0.7rem; color: var(–muted); margin-top: 3px; }
 
 /* ─── Payout Boxes ────────────────────── */
-.payout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.payout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .payout-box {
 border-radius: 12px;
 padding: 16px;
@@ -146,9 +213,82 @@ font-weight: 800;
 .payout-box.sixteenth .pb-amount { color: var(–accent); }
 .payout-box .pb-note { font-size: 0.68rem; color: var(–muted); margin-top: 6px; }
 
+/* ─── Payout Breakdown Panel ─────────── */
+.breakdown-toggle {
+width: 100%;
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 10px;
+color: var(–muted);
+font-family: var(–font-body);
+font-size: 0.78rem;
+padding: 9px 14px;
+cursor: pointer;
+text-align: left;
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-top: 12px;
+-webkit-tap-highlight-color: transparent;
+transition: border-color 0.2s;
+}
+.breakdown-toggle:active { border-color: var(–accent); }
+.breakdown-toggle .arrow { transition: transform 0.25s; font-style: normal; }
+.breakdown-toggle.open .arrow { transform: rotate(180deg); }
+.breakdown-panel {
+display: none;
+background: var(–surface2);
+border: 1px solid var(–border);
+border-top: none;
+border-radius: 0 0 10px 10px;
+padding: 14px;
+margin-top: -2px;
+}
+.breakdown-panel.open { display: block; }
+.bd-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 7px 0;
+border-bottom: 1px solid var(–border);
+font-size: 0.82rem;
+gap: 8px;
+}
+.bd-row:last-child { border-bottom: none; padding-bottom: 0; }
+.bd-row.total {
+margin-top: 6px;
+padding-top: 10px;
+border-top: 1px solid var(–faint);
+border-bottom: none;
+font-weight: 700;
+font-size: 0.9rem;
+}
+.bd-label { color: var(–muted); flex: 1; }
+.bd-val { font-family: var(–font-head); font-weight: 700; white-space: nowrap; }
+.bd-val.pos { color: var(–green); }
+.bd-val.neg { color: var(–red); }
+.bd-val.acc { color: var(–accent); }
+.bd-val.neu { color: var(–text); }
+.bd-note {
+font-size: 0.72rem;
+color: var(–muted);
+background: var(–surface3);
+border-radius: 8px;
+padding: 8px 10px;
+margin-bottom: 10px;
+line-height: 1.5;
+}
+.bd-section-title {
+font-size: 0.68rem;
+text-transform: uppercase;
+letter-spacing: 0.07em;
+color: var(–faint);
+margin: 10px 0 4px;
+}
+
 /* ─── Form ────────────────────────────── */
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-@media(min-width:600px){ .form-row.three { grid-template-columns: 1fr 1fr 1fr; } }
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
 .form-group { display: flex; flex-direction: column; gap: 5px; }
 .form-group label { font-size: 0.75rem; color: var(–muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .form-group input, .form-group select {
@@ -171,7 +311,7 @@ width: 100%;
 /* Type selector */
 .type-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
 .type-btn {
-padding: 10px 6px;
+padding: 12px 6px;
 border-radius: 10px;
 border: 1px solid var(–border);
 background: var(–surface2);
@@ -182,6 +322,11 @@ font-weight: 600;
 cursor: pointer;
 text-align: center;
 transition: all 0.2s;
+line-height: 1.3;
+-webkit-tap-highlight-color: transparent;
+display: flex;
+align-items: center;
+justify-content: center;
 }
 .type-btn.active-card { background: rgba(96,165,250,0.15); border-color: #60a5fa; color: #60a5fa; }
 .type-btn.active-cash { background: rgba(34,197,94,0.15); border-color: var(–green); color: var(–green); }
@@ -193,7 +338,7 @@ transition: all 0.2s;
 /* ─── Add Button ──────────────────────── */
 .btn-add {
 width: 100%;
-padding: 14px;
+padding: 15px;
 border-radius: 12px;
 background: linear-gradient(135deg, var(–accent), var(–accent2));
 border: none;
@@ -205,6 +350,10 @@ cursor: pointer;
 margin-top: 14px;
 transition: opacity 0.2s, transform 0.15s;
 letter-spacing: 0.03em;
+text-align: center;
+display: block;
+-webkit-tap-highlight-color: transparent;
+min-height: 50px;
 }
 .btn-add:active { opacity: 0.85; transform: scale(0.98); }
 
@@ -267,8 +416,9 @@ padding: 2px 0 2px 6px;
 .chart-empty { text-align: center; color: var(–faint); font-size: 0.85rem; padding: 40px 0; }
 
 /* ─── History ─────────────────────────── */
-.history-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
-.history-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+.history-controls { display: flex; flex-direction: column; align-items: stretch; margin-bottom: 14px; gap: 10px; }
+.history-filter { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.history-controls-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .filter-btn {
 padding: 5px 12px;
 border-radius: 20px;
@@ -288,8 +438,9 @@ border-radius: 10px;
 padding: 12px 14px;
 display: flex;
 align-items: center;
-gap: 12px;
+gap: 10px;
 animation: slideIn 0.25s ease;
+width: 100%;
 }
 @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 .history-icon {
@@ -339,17 +490,20 @@ display: flex; align-items: center; justify-content: center;
 .empty-state p { font-size: 0.85rem; }
 
 /* ─── Period Tabs ─────────────────────── */
-.period-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.period-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
 .period-tab {
-padding: 7px 16px;
-border-radius: 8px;
+flex: 1;
+padding: 9px 8px;
+border-radius: 10px;
 border: 1px solid var(–border);
 background: var(–surface2);
 color: var(–muted);
-font-size: 0.78rem;
+font-size: 0.8rem;
 font-weight: 600;
 cursor: pointer;
 transition: all 0.15s;
+text-align: center;
+-webkit-tap-highlight-color: transparent;
 }
 .period-tab.active { background: var(–accent); border-color: var(–accent); color: #fff; }
 
@@ -427,6 +581,20 @@ border: 1px solid var(–border);
   </div>
 </header>
 
+<div class="backup-wrap">
+  <div class="backup-bar">
+    <div class="backup-label">
+      <strong>💾 Your Data</strong>
+      <span id="backupCount">0 entries saved</span>
+    </div>
+    <div class="backup-btns">
+      <button class="btn-export" onclick="exportData()">⬆️ Export</button>
+      <button class="btn-import" onclick="document.getElementById('importFile').click()">⬇️ Import</button>
+      <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+    </div>
+  </div>
+</div>
+
 <main>
 
   <!-- ── Summary ── -->
@@ -490,6 +658,59 @@ border: 1px solid var(–border);
         <div class="ts-label">🔧 Svc. Fees</div>
       </div>
     </div>
+
+```
+<button class="breakdown-toggle" id="bdToggle" onclick="toggleBreakdown()">
+  <span>🧮 How is my payout calculated?</span>
+  <span class="arrow">▼</span>
+</button>
+<div class="breakdown-panel" id="bdPanel">
+  <div class="bd-note" id="bdNote"></div>
+  <div class="bd-section-title">💳 Card Orders (this period)</div>
+  <div class="bd-row">
+    <span class="bd-label">Delivery fees earned</span>
+    <span class="bd-val pos" id="bdCardDelivFees">$0.00</span>
+  </div>
+  <div class="bd-row">
+    <span class="bd-label">Tips earned (100% yours)</span>
+    <span class="bd-val pos" id="bdCardTips">$0.00</span>
+  </div>
+  <div class="bd-row">
+    <span class="bd-label">Karibites cut (20% of deliv. fees)</span>
+    <span class="bd-val neg" id="bdCardCut">-$0.00</span>
+  </div>
+  <div class="bd-row">
+    <span class="bd-label">Service fees deducted</span>
+    <span class="bd-val neg" id="bdCardSvcFee">-$0.00</span>
+  </div>
+  <div class="bd-section-title">💵 Cash Orders (this period)</div>
+  <div class="bd-row">
+    <span class="bd-label">Cash you already kept</span>
+    <span class="bd-val neu" id="bdCashKept">$0.00</span>
+  </div>
+  <div class="bd-row">
+    <span class="bd-label">20% owed to Karibites (deducted from card payout)</span>
+    <span class="bd-val neg" id="bdCashCut">-$0.00</span>
+  </div>
+  <div class="bd-row">
+    <span class="bd-label">Cash service fees (deducted from card payout)</span>
+    <span class="bd-val neg" id="bdCashSvcFee">-$0.00</span>
+  </div>
+  <div class="bd-row total">
+    <span class="bd-label">💳 Estimated Card Payout</span>
+    <span class="bd-val acc" id="bdTotal">$0.00</span>
+  </div>
+  <div class="bd-row" style="border-top:none; padding-top:4px;">
+    <span class="bd-label" style="font-size:0.72rem; color:var(--faint);">+ Cash kept in pocket</span>
+    <span class="bd-val" style="color:var(--faint); font-size:0.78rem;" id="bdCashInPocket">$0.00</span>
+  </div>
+  <div class="bd-row total" style="border-top: 1px solid var(--faint);">
+    <span class="bd-label">🏦 Total Period Earnings</span>
+    <span class="bd-val pos" id="bdGrandTotal">$0.00</span>
+  </div>
+</div>
+```
+
   </div>
 
   <!-- ── Add Entry ── -->
@@ -591,13 +812,15 @@ border: 1px solid var(–border);
   <div class="card">
     <div class="card-title">🗂 History <span class="badge" id="historyCount">0 entries</span></div>
     <div class="history-controls">
-      <div class="history-filter">
-        <button class="filter-btn active" onclick="setFilter('all')" id="fAll">All</button>
-        <button class="filter-btn" onclick="setFilter('card')" id="fCard">💳 Card</button>
-        <button class="filter-btn" onclick="setFilter('cash')" id="fCash">💵 Cash</button>
-        <button class="filter-btn" onclick="setFilter('gas')" id="fGas">⛽ Gas</button>
+      <div class="history-controls-top">
+        <div class="history-filter">
+          <button class="filter-btn active" onclick="setFilter('all')" id="fAll">All</button>
+          <button class="filter-btn" onclick="setFilter('card')" id="fCard">💳 Card</button>
+          <button class="filter-btn" onclick="setFilter('cash')" id="fCash">💵 Cash</button>
+          <button class="filter-btn" onclick="setFilter('gas')" id="fGas">⛽ Gas</button>
+        </div>
+        <button class="btn-secondary" onclick="clearAll()">🗑 Clear All</button>
       </div>
-      <button class="btn-secondary" onclick="clearAll()">🗑 Clear All</button>
     </div>
     <div class="history-list" id="historyList"></div>
     <div class="pagination" id="pagination"></div>
@@ -631,6 +854,7 @@ function init() {
   selectedDate = now;
   setupDateInput();
   renderAll();
+  updateBackupCount();
 }
 
 function setDateInput(d) {
@@ -737,6 +961,13 @@ function getPeriodRange(period) {
   }
 }
 
+function toggleBreakdown() {
+  const btn = document.getElementById('bdToggle');
+  const panel = document.getElementById('bdPanel');
+  btn.classList.toggle('open');
+  panel.classList.toggle('open');
+}
+
 function switchPeriod(p) {
   currentPeriod = p;
   document.getElementById('tabCurrent').className = 'period-tab' + (p==='current'?' active':'');
@@ -817,7 +1048,6 @@ function renderPayouts() {
   const isFirst = now.getDate() < 16;
 
   if (isFirst) {
-    // current period ends 15th, paid 16th
     document.getElementById('payDate1').textContent = 'Next 1st';
     document.getElementById('pay1').textContent = '$0.00';
     document.getElementById('pay1note').textContent = 'future period';
@@ -836,6 +1066,48 @@ function renderPayouts() {
     document.getElementById('pay1').style.color = payout < 0 ? 'var(--red)' : 'var(--green)';
     document.getElementById('pay1note').textContent = payout < 0 ? '⚠️ Cash deductions exceed card' : 'estimated payout';
   }
+
+  // ── Populate breakdown panel ──
+  let bdCardDelivFees = 0, bdCardTips = 0, bdCardCut = 0, bdCardSvcFee = 0;
+  let bdCashKept = 0, bdCashCut = 0, bdCashSvcFee = 0;
+
+  periodEntries.forEach(e => {
+    if (e.type === 'card') {
+      bdCardDelivFees += e.delivFee;
+      bdCardTips += e.tip;
+      bdCardCut += e.compCut;
+      bdCardSvcFee += e.serviceFee;
+    } else if (e.type === 'cash') {
+      bdCashKept += e.cashKept;
+      bdCashCut += e.compCut;
+      bdCashSvcFee += e.serviceFee;
+    }
+  });
+
+  const bdGrandTotal = payout + bdCashKept;
+  const startLabel = range.start.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  const endLabel = range.end.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+
+  document.getElementById('bdNote').innerHTML =
+    '📆 Period: <strong>' + startLabel + ' – ' + endLabel + '</strong><br>' +
+    'Karibites pays you via card transfer on the <strong>' + range.payoutLabel + '</strong>. ' +
+    'Cash orders are balanced by deducting the 20% + service fee from your card payout instead of collecting cash from you.';
+
+  const $ = (id, val, isNeg) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (isNeg ? '-' : '') + '$' + Math.abs(val).toFixed(2);
+  };
+  $('bdCardDelivFees', bdCardDelivFees);
+  $('bdCardTips', bdCardTips);
+  $('bdCardCut', bdCardCut, true);
+  $('bdCardSvcFee', bdCardSvcFee, true);
+  $('bdCashKept', bdCashKept);
+  $('bdCashCut', bdCashCut, true);
+  $('bdCashSvcFee', bdCashSvcFee, true);
+  document.getElementById('bdTotal').textContent = (payout < 0 ? '-' : '') + '$' + Math.abs(payout).toFixed(2);
+  document.getElementById('bdTotal').style.color = payout < 0 ? 'var(--red)' : 'var(--accent)';
+  $('bdCashInPocket', bdCashKept);
+  document.getElementById('bdGrandTotal').textContent = '$' + bdGrandTotal.toFixed(2);
 }
 
 // ─── Chart ────────────────────────────────────────────
@@ -1059,7 +1331,10 @@ function setupDateInput() {
 }
 
 // ─── Storage ──────────────────────────────────────────
-function save() { localStorage.setItem('kb_entries', JSON.stringify(entries)); }
+function save() {
+  localStorage.setItem('kb_entries', JSON.stringify(entries));
+  updateBackupCount();
+}
 
 // ─── Toast ────────────────────────────────────────────
 let toastTimer;
@@ -1069,6 +1344,59 @@ function showToast(msg, type) {
   t.className = 'show ' + (type||'');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.className = ''; }, 3000);
+}
+
+// ─── Backup / Restore ────────────────────────────────
+function exportData() {
+  if (entries.length === 0) {
+    showToast('⚠️ No data to export yet', 'error');
+    return;
+  }
+  const payload = JSON.stringify({ version: 1, exported: new Date().toISOString(), entries: entries }, null, 2);
+  const blob = new Blob([payload], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = 'karibites-backup-' + dateStr + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✅ Backup downloaded! Save it to Files or Notes.', 'success');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const imported = data.entries || data; // support both wrapped and raw array
+      if (!Array.isArray(imported)) throw new Error('Invalid format');
+      if (entries.length > 0) {
+        if (!confirm('This will REPLACE your current ' + entries.length + ' entries with ' + imported.length + ' entries from the backup. Continue?')) {
+          event.target.value = '';
+          return;
+        }
+      }
+      entries = imported;
+      save();
+      renderAll();
+      updateBackupCount();
+      showToast('✅ ' + imported.length + ' entries restored!', 'success');
+    } catch(err) {
+      showToast('❌ Invalid backup file', 'error');
+    }
+    event.target.value = ''; // reset so same file can be imported again
+  };
+  reader.readAsText(file);
+}
+
+function updateBackupCount() {
+  const el = document.getElementById('backupCount');
+  if (el) el.textContent = entries.length + ' entr' + (entries.length === 1 ? 'y' : 'ies') + ' saved';
 }
 
 // ─── Start ────────────────────────────────────────────

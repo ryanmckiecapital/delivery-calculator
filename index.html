@@ -42,7 +42,6 @@ padding:18px;
 border:1px solid var(--border);
 width:100%;
 box-sizing:border-box;
-overflow:hidden;
 }
 
 h1,h3{
@@ -69,7 +68,6 @@ margin-top:10px;
 input,select{
 display:block;
 width:100%;
-max-width:100%;
 padding:12px;
 border-radius:10px;
 border:1px solid var(--border);
@@ -81,12 +79,8 @@ font-size:16px;
 }
 
 input[type="date"]{
-width:100%;
-max-width:100%;
-display:block;
-box-sizing:border-box;
--webkit-appearance:none;
 appearance:none;
+-webkit-appearance:none;
 }
 
 button{
@@ -169,14 +163,27 @@ padding:6px 10px;
 .profitGreen{color:var(--green);font-weight:bold;}
 .profitRed{color:var(--red);font-weight:bold;}
 
-.tools{
-display:flex;
-gap:10px;
+.chart{
 margin-top:10px;
+display:flex;
+align-items:flex-end;
+gap:6px;
+height:150px;
 }
 
-.tools button{
+.bar{
 flex:1;
+background:#4f9cff;
+border-radius:4px 4px 0 0;
+position:relative;
+}
+
+.bar span{
+position:absolute;
+bottom:-18px;
+font-size:10px;
+left:50%;
+transform:translateX(-50%);
 }
 
 </style>
@@ -211,6 +218,15 @@ flex:1;
 <div class="stat"><span>Profit After Gas</span><span>$<span id="profit">0</span></span></div>
 
 <div class="total">Total Earnings: $<span id="grandTotal">0</span></div>
+
+</div>
+
+
+<div class="card">
+
+<h3>Daily Earnings</h3>
+
+<div id="chart" class="chart"></div>
 
 </div>
 
@@ -266,23 +282,6 @@ flex:1;
 
 </div>
 
-
-<div class="card">
-
-<h3>Backup</h3>
-
-<div class="tools">
-
-<button onclick="exportData()">Export</button>
-
-<button onclick="document.getElementById('importFile').click()">Import</button>
-
-<input id="importFile" type="file" style="display:none" onchange="importData(event)">
-
-</div>
-
-</div>
-
 </div>
 
 <script>
@@ -291,7 +290,6 @@ let deliveries=[]
 let db
 let currentPage=1
 const perPage=10
-
 let startX=0
 
 let request=indexedDB.open("driverDB",1)
@@ -307,7 +305,6 @@ loadData()
 }
 
 function loadData(){
-
 let tx=db.transaction("deliveries","readonly")
 let store=tx.objectStore("deliveries")
 
@@ -315,15 +312,12 @@ store.getAll().onsuccess=e=>{
 deliveries=e.target.result
 render()
 }
-
 }
 
 function saveDelivery(data){
-
 let tx=db.transaction("deliveries","readwrite")
 tx.objectStore("deliveries").add(data)
 tx.oncomplete=loadData
-
 }
 
 function addDelivery(){
@@ -345,51 +339,12 @@ document.getElementById("deliveryFee").value=""
 document.getElementById("tip").value=""
 document.getElementById("serviceFee").value=""
 
-document.getElementById("deliveryFee").focus()
-
 }
 
 function deleteDelivery(id){
-
 let tx=db.transaction("deliveries","readwrite")
 tx.objectStore("deliveries").delete(id)
 tx.oncomplete=loadData
-
-}
-
-function exportData(){
-
-let blob=new Blob([JSON.stringify(deliveries)],{type:"application/json"})
-let url=URL.createObjectURL(blob)
-
-let a=document.createElement("a")
-a.href=url
-a.download="driver_backup.json"
-a.click()
-
-}
-
-function importData(event){
-
-let file=event.target.files[0]
-
-let reader=new FileReader()
-
-reader.onload=function(e){
-
-let imported=JSON.parse(e.target.result)
-
-let tx=db.transaction("deliveries","readwrite")
-let store=tx.objectStore("deliveries")
-
-imported.forEach(d=>store.add(d))
-
-tx.oncomplete=loadData
-
-}
-
-reader.readAsText(file)
-
 }
 
 function render(){
@@ -407,6 +362,8 @@ let serviceTotal=0
 
 let pay1=0
 let pay2=0
+
+let dailyTotals={}
 
 page.forEach(d=>{
 
@@ -460,6 +417,26 @@ serviceTotal+=d.service
 
 tipsTotal+=d.tip
 
+if(!dailyTotals[d.date]) dailyTotals[d.date]=0
+dailyTotals[d.date]+=d.earning
+
+})
+
+let chart=document.getElementById("chart")
+chart.innerHTML=""
+
+let max=Math.max(...Object.values(dailyTotals),10)
+
+Object.entries(dailyTotals).slice(-7).forEach(([date,total])=>{
+
+let height=(total/max)*120
+
+chart.innerHTML+=`
+<div class="bar" style="height:${height}px">
+<span>${new Date(date).getDate()}</span>
+</div>
+`
+
 })
 
 let companyPayout=cardTotal-serviceTotal
@@ -479,7 +456,6 @@ document.getElementById("pay1").innerText=pay1.toFixed(2)
 document.getElementById("pay2").innerText=pay2.toFixed(2)
 
 let profitEl=document.getElementById("profit")
-
 profitEl.innerText=profit.toFixed(2)
 profitEl.className=profit>=0?"profitGreen":"profitRed"
 

@@ -1,356 +1,1108 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Delivery Earnings Tracker</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Karibites Earnings Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --surface3: #1f2c42;
+    --border: #243049;
+    --accent: #f97316;
+    --accent2: #fb923c;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --faint: #334155;
+    --card-r: 16px;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    background-image: radial-gradient(ellipse at 20% 0%, rgba(249,115,22,0.08) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 100%, rgba(34,197,94,0.05) 0%, transparent 60%);
+  }
 
-:root{
---bg:#0f172a;
---card:#1e293b;
---border:#334155;
---text:#f8fafc;
---green:#22c55e;
---red:#ef4444;
---blue:#3b82f6;
---cash:#16a34a;
+/* ─── Header ─────────────────────────── */
+header {
+padding: 20px 20px 0;
+display: flex;
+align-items: center;
+justify-content: space-between;
+max-width: 900px;
+margin: 0 auto;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+width: 40px; height: 40px;
+background: linear-gradient(135deg, var(–accent), var(–accent2));
+border-radius: 10px;
+display: flex; align-items: center; justify-content: center;
+font-size: 20px;
+}
+.logo-text { font-family: var(–font-head); font-size: 1.3rem; font-weight: 800; }
+.logo-text span { color: var(–accent); }
+.header-date { font-size: 0.8rem; color: var(–muted); text-align: right; }
+.header-date strong { color: var(–text); display: block; font-size: 0.9rem; }
+
+/* ─── Layout ──────────────────────────── */
+main { max-width: 900px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+/* ─── Cards ───────────────────────────── */
+.card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: var(–card-r);
+padding: 20px;
+}
+.card-title {
+font-family: var(–font-head);
+font-size: 1rem;
+font-weight: 700;
+margin-bottom: 16px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.card-title .badge {
+font-family: var(–font-body);
+font-size: 0.65rem;
+font-weight: 600;
+padding: 2px 8px;
+border-radius: 20px;
+background: var(–surface3);
+color: var(–muted);
+letter-spacing: 0.05em;
+text-transform: uppercase;
 }
 
-*{
-box-sizing:border-box;
+/* ─── Summary Strip ───────────────────── */
+.summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media(min-width:600px){ .summary-grid { grid-template-columns: repeat(4, 1fr); } }
+.sum-box {
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 14px;
+position: relative;
+overflow: hidden;
 }
-
-body{
-margin:0;
-padding:16px;
-background:var(--bg);
-color:var(--text);
-font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
+.sum-box::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 3px;
+border-radius: 12px 12px 0 0;
 }
+.sum-box.orange::before { background: var(–accent); }
+.sum-box.green::before { background: var(–green); }
+.sum-box.red::before { background: var(–red); }
+.sum-box.blue::before { background: #60a5fa; }
+.sum-label { font-size: 0.7rem; color: var(–muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.sum-value { font-family: var(–font-head); font-size: 1.5rem; font-weight: 800; }
+.sum-value.pos { color: var(–green); }
+.sum-value.neg { color: var(–red); }
+.sum-value.neu { color: var(–text); }
+.sum-value.acc { color: var(–accent); }
+.sum-sub { font-size: 0.7rem; color: var(–muted); margin-top: 3px; }
 
-.container{
-max-width:520px;
-margin:auto;
-display:flex;
-flex-direction:column;
-gap:16px;
+/* ─── Payout Boxes ────────────────────── */
+.payout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.payout-box {
+border-radius: 12px;
+padding: 16px;
+text-align: center;
+border: 1px solid;
 }
-
-.card{
-background:var(--card);
-padding:18px;
-border-radius:14px;
-border:1px solid var(--border);
+.payout-box.first { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); }
+.payout-box.sixteenth { background: rgba(249,115,22,0.08); border-color: rgba(249,115,22,0.3); }
+.payout-box .pb-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(–muted); margin-bottom: 4px; }
+.payout-box .pb-date { font-family: var(–font-head); font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; }
+.payout-box.first .pb-date { color: var(–green); }
+.payout-box.sixteenth .pb-date { color: var(–accent); }
+.payout-box .pb-amount {
+font-family: var(–font-head);
+font-size: 2rem;
+font-weight: 800;
 }
+.payout-box.first .pb-amount { color: var(–green); }
+.payout-box.sixteenth .pb-amount { color: var(–accent); }
+.payout-box .pb-note { font-size: 0.68rem; color: var(–muted); margin-top: 6px; }
 
-h2,h3{
-margin-top:0;
+/* ─── Form ────────────────────────────── */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media(min-width:600px){ .form-row.three { grid-template-columns: 1fr 1fr 1fr; } }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 0.75rem; color: var(–muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.form-group input, .form-group select {
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 10px;
+color: var(–text);
+padding: 11px 14px;
+font-family: var(–font-body);
+font-size: 0.95rem;
+outline: none;
+transition: border-color 0.2s;
+width: 100%;
+-webkit-appearance: none;
 }
+.form-group input:focus, .form-group select:focus { border-color: var(–accent); }
+.form-group input::placeholder { color: var(–faint); }
+.form-group select option { background: var(–surface); }
 
-.stat{
-display:flex;
-justify-content:space-between;
-margin:6px 0;
+/* Type selector */
+.type-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.type-btn {
+padding: 10px 6px;
+border-radius: 10px;
+border: 1px solid var(–border);
+background: var(–surface2);
+color: var(–muted);
+font-family: var(–font-body);
+font-size: 0.8rem;
+font-weight: 600;
+cursor: pointer;
+text-align: center;
+transition: all 0.2s;
 }
+.type-btn.active-card { background: rgba(96,165,250,0.15); border-color: #60a5fa; color: #60a5fa; }
+.type-btn.active-cash { background: rgba(34,197,94,0.15); border-color: var(–green); color: var(–green); }
+.type-btn.active-gas { background: rgba(239,68,68,0.15); border-color: var(–red); color: var(–red); }
 
-.total{
-font-size:20px;
-font-weight:bold;
-margin-top:10px;
+.cash-fields { display: none; flex-direction: column; gap: 10px; }
+.cash-fields.visible { display: flex; }
+
+/* ─── Add Button ──────────────────────── */
+.btn-add {
+width: 100%;
+padding: 14px;
+border-radius: 12px;
+background: linear-gradient(135deg, var(–accent), var(–accent2));
+border: none;
+color: #fff;
+font-family: var(–font-head);
+font-size: 1rem;
+font-weight: 700;
+cursor: pointer;
+margin-top: 14px;
+transition: opacity 0.2s, transform 0.15s;
+letter-spacing: 0.03em;
 }
+.btn-add:active { opacity: 0.85; transform: scale(0.98); }
 
-input,select{
-width:100%;
-padding:12px;
-margin-top:6px;
-border-radius:10px;
-border:1px solid var(--border);
-background:#020617;
-color:white;
-font-size:16px;
+.btn-secondary {
+padding: 8px 16px;
+border-radius: 10px;
+background: var(–surface3);
+border: 1px solid var(–border);
+color: var(–muted);
+font-family: var(–font-body);
+font-size: 0.8rem;
+cursor: pointer;
+transition: all 0.2s;
 }
+.btn-secondary:hover { border-color: var(–accent); color: var(–accent); }
 
-button{
-margin-top:12px;
-width:100%;
-padding:14px;
-border:none;
-border-radius:10px;
-background:var(--blue);
-color:white;
-font-size:16px;
-font-weight:bold;
+/* ─── Date Picker ─────────────────────── */
+.date-row { display: flex; gap: 10px; align-items: flex-end; }
+.date-row .form-group { flex: 1; }
+.calendar-popup {
+position: fixed;
+z-index: 999;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 14px;
+padding: 16px;
+box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+min-width: 290px;
+display: none;
 }
-
-.delivery{
-display:flex;
-justify-content:space-between;
-padding:10px 0;
-border-bottom:1px solid var(--border);
+.calendar-popup.open { display: block; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-nav {
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 8px;
+color: var(–text);
+padding: 5px 10px;
+cursor: pointer;
+font-size: 1rem;
 }
-
-.badge{
-padding:4px 8px;
-border-radius:6px;
-font-size:11px;
-font-weight:bold;
+.cal-month { font-family: var(–font-head); font-size: 0.95rem; font-weight: 700; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.cal-day-name { text-align: center; font-size: 0.65rem; color: var(–muted); padding: 4px 0; text-transform: uppercase; }
+.cal-day {
+text-align: center;
+padding: 7px 3px;
+border-radius: 7px;
+cursor: pointer;
+font-size: 0.8rem;
+transition: background 0.15s;
 }
+.cal-day:hover { background: var(–surface3); }
+.cal-day.today { background: rgba(249,115,22,0.2); color: var(–accent); font-weight: 700; }
+.cal-day.selected { background: var(–accent); color: #fff; font-weight: 700; }
+.cal-day.other-month { color: var(–faint); }
+.cal-overlay { position: fixed; inset: 0; z-index: 998; display: none; }
+.cal-overlay.open { display: block; }
 
-.cardbadge{background:var(--blue)}
-.cashbadge{background:var(--cash)}
-
-.green{color:var(--green)}
-.red{color:var(--red)}
-
-.chart{
-display:flex;
-align-items:flex-end;
-gap:6px;
-height:140px;
-margin-top:10px;
+/* ─── Bar Chart ───────────────────────── */
+.chart-wrap { overflow-x: auto; padding-bottom: 4px; }
+.bar-chart {
+display: flex;
+align-items: flex-end;
+gap: 6px;
+height: 140px;
+min-width: 100%;
+padding: 0 2px;
 }
-
-.bar{
-flex:1;
-background:#3b82f6;
-border-radius:4px 4px 0 0;
-position:relative;
+.bar-group { flex: 1; min-width: 32px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bar-wrap { width: 100%; flex: 1; display: flex; align-items: flex-end; }
+.bar {
+width: 100%;
+border-radius: 6px 6px 0 0;
+transition: height 0.4s cubic-bezier(.4,0,.2,1);
+min-height: 3px;
+position: relative;
+cursor: pointer;
 }
+.bar.positive { background: linear-gradient(180deg, var(–green), rgba(34,197,94,0.4)); }
+.bar.negative { background: linear-gradient(180deg, var(–red), rgba(239,68,68,0.4)); }
+.bar-label { font-size: 0.62rem; color: var(–muted); text-align: center; white-space: nowrap; }
+.bar-val { font-size: 0.62rem; color: var(–muted); text-align: center; }
+.chart-empty { text-align: center; color: var(–faint); font-size: 0.85rem; padding: 40px 0; }
 
-.bar span{
-position:absolute;
-bottom:-18px;
-left:50%;
-transform:translateX(-50%);
-font-size:10px;
+/* ─── History ─────────────────────────── */
+.history-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+.history-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-btn {
+padding: 5px 12px;
+border-radius: 20px;
+border: 1px solid var(–border);
+background: var(–surface2);
+color: var(–muted);
+font-size: 0.75rem;
+cursor: pointer;
+transition: all 0.15s;
 }
+.filter-btn.active { border-color: var(–accent); color: var(–accent); background: rgba(249,115,22,0.1); }
+.history-list { display: flex; flex-direction: column; gap: 8px; }
+.history-item {
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 12px 14px;
+display: flex;
+align-items: center;
+gap: 12px;
+animation: slideIn 0.25s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.history-icon {
+width: 36px; height: 36px;
+border-radius: 10px;
+display: flex; align-items: center; justify-content: center;
+font-size: 1.1rem;
+flex-shrink: 0;
+}
+.hi-card { background: rgba(96,165,250,0.15); }
+.hi-cash { background: rgba(34,197,94,0.15); }
+.hi-gas { background: rgba(239,68,68,0.15); }
+.history-info { flex: 1; min-width: 0; }
+.hi-title { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hi-date { font-size: 0.7rem; color: var(–muted); margin-top: 2px; }
+.hi-breakdown { font-size: 0.68rem; color: var(–faint); margin-top: 1px; }
+.history-amount { font-family: var(–font-head); font-size: 1rem; font-weight: 700; white-space: nowrap; }
+.history-amount.pos { color: var(–green); }
+.history-amount.neg { color: var(–red); }
+.del-btn {
+background: none;
+border: none;
+color: var(–faint);
+cursor: pointer;
+padding: 4px;
+border-radius: 6px;
+font-size: 1rem;
+transition: color 0.15s;
+}
+.del-btn:hover { color: var(–red); }
+.pagination { display: flex; gap: 6px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+.page-btn {
+width: 34px; height: 34px;
+border-radius: 8px;
+border: 1px solid var(–border);
+background: var(–surface2);
+color: var(–muted);
+font-size: 0.82rem;
+cursor: pointer;
+transition: all 0.15s;
+display: flex; align-items: center; justify-content: center;
+}
+.page-btn.active { background: var(–accent); border-color: var(–accent); color: #fff; font-weight: 700; }
+.page-btn:hover:not(.active) { border-color: var(–accent); color: var(–accent); }
+.empty-state { text-align: center; padding: 30px; color: var(–faint); }
+.empty-state .es-icon { font-size: 2.5rem; margin-bottom: 8px; }
+.empty-state p { font-size: 0.85rem; }
 
+/* ─── Period Tabs ─────────────────────── */
+.period-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.period-tab {
+padding: 7px 16px;
+border-radius: 8px;
+border: 1px solid var(–border);
+background: var(–surface2);
+color: var(–muted);
+font-size: 0.78rem;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.15s;
+}
+.period-tab.active { background: var(–accent); border-color: var(–accent); color: #fff; }
+
+/* ─── Toast ───────────────────────────── */
+#toast {
+position: fixed;
+bottom: 24px;
+left: 50%;
+transform: translateX(-50%) translateY(80px);
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 12px 22px;
+font-size: 0.85rem;
+box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+z-index: 1000;
+transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+display: flex;
+align-items: center;
+gap: 8px;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.success { border-color: var(–green); }
+#toast.error { border-color: var(–red); }
+
+/* ─── Tips Breakdown ──────────────────── */
+.tips-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+.tip-stat {
+background: var(–surface2);
+border-radius: 10px;
+padding: 10px;
+text-align: center;
+border: 1px solid var(–border);
+}
+.tip-stat .ts-val { font-family: var(–font-head); font-size: 1.1rem; font-weight: 800; color: var(–yellow); }
+.tip-stat .ts-label { font-size: 0.65rem; color: var(–muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+/* ─── Scrollbar ───────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(–surface); }
+::-webkit-scrollbar-thumb { background: var(–border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(–faint); }
+
+/* ─── Section divider ─────────────────── */
+.divider { border: none; border-top: 1px solid var(–border); margin: 4px 0; }
+
+/* ─── Responsive tweaks ───────────────── */
+@media(max-width:400px){
+.payout-box .pb-amount { font-size: 1.5rem; }
+.sum-value { font-size: 1.2rem; }
+}
 </style>
-</head>
 
+</head>
 <body>
 
-<div class="container">
+<header>
+  <div class="logo">
+    <div class="logo-icon">🛵</div>
+    <div class="logo-text">Kari<span>bites</span></div>
+  </div>
+  <div class="header-date">
+    <strong id="hdrDate"></strong>
+    <span id="hdrDay"></span>
+  </div>
+</header>
 
-<div class="card">
+<main>
 
-<h2>Driver Dashboard</h2>
+  <!-- ── Summary ── -->
 
-<div class="stat">
-<span>Company Payout</span>
-<span>$<span id="companyPayout">0</span></span>
+  <div class="summary-grid">
+    <div class="sum-box orange">
+      <div class="sum-label">💰 Total Earned</div>
+      <div class="sum-value acc" id="sumTotal">$0.00</div>
+      <div class="sum-sub">gross deliveries</div>
+    </div>
+    <div class="sum-box green">
+      <div class="sum-label">✅ Net Take-Home</div>
+      <div class="sum-value pos" id="sumNet">$0.00</div>
+      <div class="sum-sub">after deductions</div>
+    </div>
+    <div class="sum-box red">
+      <div class="sum-label">⛽ Gas Expense</div>
+      <div class="sum-value neg" id="sumGas">$0.00</div>
+      <div class="sum-sub">total fuel costs</div>
+    </div>
+    <div class="sum-box blue">
+      <div class="sum-label">🧾 Co. Deducted</div>
+      <div class="sum-value" id="sumDeducted" style="color:#60a5fa">$0.00</div>
+      <div class="sum-sub">20% platform cut</div>
+    </div>
+  </div>
+
+  <!-- ── Payout Forecast ── -->
+
+  <div class="card">
+    <div class="card-title">📅 Payout Forecast <span class="badge">Bi-Weekly</span></div>
+    <div class="period-tabs">
+      <button class="period-tab active" onclick="switchPeriod('current')" id="tabCurrent">Current Period</button>
+      <button class="period-tab" onclick="switchPeriod('next')" id="tabNext">Next Period</button>
+    </div>
+    <div class="payout-grid">
+      <div class="payout-box first">
+        <div class="pb-label">💳 Payout</div>
+        <div class="pb-date" id="payDate1">1st</div>
+        <div class="pb-amount" id="pay1">$0.00</div>
+        <div class="pb-note" id="pay1note">card earnings only</div>
+      </div>
+      <div class="payout-box sixteenth">
+        <div class="pb-label">💳 Payout</div>
+        <div class="pb-date" id="payDate16">16th</div>
+        <div class="pb-amount" id="pay16">$0.00</div>
+        <div class="pb-note" id="pay16note">card earnings only</div>
+      </div>
+    </div>
+    <div class="tips-row" style="margin-top:12px">
+      <div class="tip-stat">
+        <div class="ts-val" id="totalTips">$0.00</div>
+        <div class="ts-label">💡 Tips</div>
+      </div>
+      <div class="tip-stat">
+        <div class="ts-val" id="totalDelivFee">$0.00</div>
+        <div class="ts-label">🚗 Deliv. Fees</div>
+      </div>
+      <div class="tip-stat">
+        <div class="ts-val" id="totalServiceFee">$0.00</div>
+        <div class="ts-label">🔧 Svc. Fees</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Add Entry ── -->
+
+  <div class="card">
+    <div class="card-title">➕ Add Entry</div>
+
+```
+<!-- Type Selector -->
+<div class="type-selector">
+  <button class="type-btn active-card" id="btnCard" onclick="selectType('card')">💳 Card Order</button>
+  <button class="type-btn" id="btnCash" onclick="selectType('cash')">💵 Cash Order</button>
+  <button class="type-btn" id="btnGas" onclick="selectType('gas')">⛽ Gas Expense</button>
 </div>
 
-<div class="stat">
-<span>Card Earnings</span>
-<span>$<span id="cardTotal">0</span></span>
+<!-- Date Row -->
+<div style="margin-bottom:12px">
+  <div class="form-group">
+    <label>📆 Date</label>
+    <div style="position:relative; display:flex; gap:8px;">
+      <input type="text" id="entryDate" placeholder="YYYY-MM-DD" readonly style="cursor:pointer; flex:1;" onclick="openCal()">
+      <button class="btn-secondary" onclick="openCal()" style="padding:11px 14px; white-space:nowrap;">📅 Pick</button>
+    </div>
+  </div>
 </div>
 
-<div class="stat">
-<span>Cash Earnings</span>
-<span>$<span id="cashTotal">0</span></span>
+<!-- Card Fields -->
+<div id="cardFields">
+  <div class="form-row three">
+    <div class="form-group">
+      <label>🚗 Delivery Fee</label>
+      <input type="number" id="cardDelivFee" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>💡 Tip</label>
+      <input type="number" id="cardTip" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>🏷 Service Fee</label>
+      <input type="number" id="cardServiceFee" placeholder="0.00" min="0" step="0.01">
+    </div>
+  </div>
 </div>
 
-<div class="stat">
-<span>Tips</span>
-<span>$<span id="tipsTotal">0</span></span>
+<!-- Cash Fields -->
+<div class="cash-fields" id="cashFields">
+  <div class="form-row three">
+    <div class="form-group">
+      <label>🚗 Delivery Fee</label>
+      <input type="number" id="cashDelivFee" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>💡 Tip</label>
+      <input type="number" id="cashTip" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>🏷 Service Fee</label>
+      <input type="number" id="cashServiceFee" placeholder="0.00" min="0" step="0.01">
+    </div>
+  </div>
+  <div style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25); border-radius:10px; padding:10px; font-size:0.78rem; color:var(--muted);">
+    💡 <strong style="color:var(--green)">Cash order:</strong> You keep all cash collected. The 20% owed to Karibites + service fee will be deducted from your card payout.
+  </div>
 </div>
 
-<div class="stat">
-<span>Gas</span>
-<span>$ <input id="gas" type="number" value="0"></span>
+<!-- Gas Fields -->
+<div id="gasFields" style="display:none">
+  <div class="form-row">
+    <div class="form-group">
+      <label>⛽ Gas Amount ($)</label>
+      <input type="number" id="gasAmount" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>📝 Note (optional)</label>
+      <input type="text" id="gasNote" placeholder="e.g. Shell station">
+    </div>
+  </div>
+  <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:10px; font-size:0.78rem; color:var(--muted); margin-top:8px;">
+    ⛽ Gas expenses are deducted from your net take-home and tracked separately.
+  </div>
 </div>
 
-<div class="stat">
-<span>Profit After Gas</span>
-<span>$<span id="profit">0</span></span>
+<button class="btn-add" onclick="addEntry()">Add Entry ✓</button>
+```
+
+  </div>
+
+  <!-- ── Bar Chart ── -->
+
+  <div class="card">
+    <div class="card-title">📊 Daily Earnings <span class="badge">Last 14 days</span></div>
+    <div class="chart-wrap">
+      <div class="bar-chart" id="barChart">
+        <div class="chart-empty">No data yet — add some deliveries!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── History ── -->
+
+  <div class="card">
+    <div class="card-title">🗂 History <span class="badge" id="historyCount">0 entries</span></div>
+    <div class="history-controls">
+      <div class="history-filter">
+        <button class="filter-btn active" onclick="setFilter('all')" id="fAll">All</button>
+        <button class="filter-btn" onclick="setFilter('card')" id="fCard">💳 Card</button>
+        <button class="filter-btn" onclick="setFilter('cash')" id="fCash">💵 Cash</button>
+        <button class="filter-btn" onclick="setFilter('gas')" id="fGas">⛽ Gas</button>
+      </div>
+      <button class="btn-secondary" onclick="clearAll()">🗑 Clear All</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+</main>
+
+<!-- Calendar Overlay -->
+
+<div class="cal-overlay" id="calOverlay" onclick="closeCal()"></div>
+<div class="calendar-popup" id="calPopup">
+  <div class="cal-header">
+    <button class="cal-nav" onclick="calNav(-1)">‹</button>
+    <div class="cal-month" id="calMonthLabel"></div>
+    <button class="cal-nav" onclick="calNav(1)">›</button>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
 </div>
 
-<div class="total">
-Total Earnings: $<span id="grandTotal">0</span>
-</div>
+<!-- Toast -->
 
-</div>
-
-<div class="card">
-
-<h3>Add Delivery</h3>
-
-<label>Date</label>
-<input id="date" type="date">
-
-<label>Type</label>
-<select id="type">
-<option value="card">Card</option>
-<option value="cash">Cash</option>
-</select>
-
-<label>Delivery Fee</label>
-<input id="fee" type="number">
-
-<label>Tip</label>
-<input id="tip" type="number">
-
-<label>Service Fee</label>
-<input id="service" type="number">
-
-<button onclick="addDelivery()">Add Delivery</button>
-
-</div>
-
-<div class="card">
-
-<h3>Daily Earnings</h3>
-<div id="chart" class="chart"></div>
-
-</div>
-
-<div class="card">
-
-<h3>Delivery History</h3>
-<div id="history"></div>
-
-</div>
-
-</div>
+<div id="toast"></div>
 
 <script>
+// ─── State ───────────────────────────────────────────
+let entries = JSON.parse(localStorage.getItem('kb_entries') || '[]');
+let currentType = 'card';
+let currentPage = 1;
+const PAGE_SIZE = 10;
+let histFilter = 'all';
+let currentPeriod = 'current';
 
-let deliveries=[]
+// Calendar state
+let calDate = new Date();
+let selectedDate = new Date();
 
-function addDelivery(){
-
-let date=document.getElementById("date").value
-let type=document.getElementById("type").value
-let fee=parseFloat(document.getElementById("fee").value)||0
-let tip=parseFloat(document.getElementById("tip").value)||0
-let service=parseFloat(document.getElementById("service").value)||0
-
-let driverEarn=0
-let companyCut=fee*0.20
-
-if(type==="card"){
-
-driverEarn=(fee-companyCut)+tip
-
-}else{
-
-driverEarn=(fee-companyCut)-service+tip
-
+// ─── Init ─────────────────────────────────────────────
+function init() {
+  const now = new Date();
+  document.getElementById('hdrDate').textContent = now.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('hdrDay').textContent = now.toLocaleDateString('en-US', { weekday:'long' });
+  setDateInput(now);
+  renderAll();
 }
 
-deliveries.push({
-date,
-type,
-fee,
-tip,
-service,
-driverEarn,
-companyCut
-})
-
-document.getElementById("fee").value=""
-document.getElementById("tip").value=""
-document.getElementById("service").value=""
-
-render()
-
+function setDateInput(d) {
+  selectedDate = d;
+  document.getElementById('entryDate').value = formatDate(d);
+}
+function formatDate(d) {
+  return d.toISOString().split('T')[0];
+}
+function parseDate(s) {
+  const [y,m,dd] = s.split('-').map(Number);
+  return new Date(y, m-1, dd);
 }
 
-function render(){
-
-let cardTotal=0
-let cashTotal=0
-let tips=0
-
-let cashCompanyCuts=0
-let cashServiceFees=0
-
-let history=document.getElementById("history")
-history.innerHTML=""
-
-let daily={}
-
-deliveries.forEach((d,i)=>{
-
-history.innerHTML+=`
-<div class="delivery">
-<div>
-<span class="badge ${d.type==="cash"?"cashbadge":"cardbadge"}">${d.type}</span>
-<strong>$${d.driverEarn.toFixed(2)}</strong>
-<br>
-<small>${d.date}</small>
-</div>
-<button onclick="removeDelivery(${i})">Delete</button>
-</div>
-`
-
-tips+=d.tip
-
-if(d.type==="card"){
-
-cardTotal+=d.driverEarn
-
-}else{
-
-cashTotal+=d.driverEarn
-cashCompanyCuts+=d.companyCut
-cashServiceFees+=d.service
-
+// ─── Type Selector ────────────────────────────────────
+function selectType(t) {
+  currentType = t;
+  ['card','cash','gas'].forEach(type => {
+    document.getElementById('btn' + type.charAt(0).toUpperCase() + type.slice(1)).className =
+      'type-btn' + (type === t ? ' active-' + type : '');
+  });
+  document.getElementById('cardFields').style.display = t === 'card' ? 'block' : 'none';
+  document.getElementById('cashFields').className = 'cash-fields' + (t === 'cash' ? ' visible' : '');
+  document.getElementById('gasFields').style.display = t === 'gas' ? 'block' : 'none';
 }
 
-if(!daily[d.date]) daily[d.date]=0
-daily[d.date]+=d.driverEarn
+// ─── Add Entry ────────────────────────────────────────
+function addEntry() {
+  const date = document.getElementById('entryDate').value || formatDate(new Date());
 
-})
+  if (currentType === 'card') {
+    const delivFee = parseFloat(document.getElementById('cardDelivFee').value) || 0;
+    const tip = parseFloat(document.getElementById('cardTip').value) || 0;
+    const serviceFee = parseFloat(document.getElementById('cardServiceFee').value) || 0;
+    if (delivFee + tip === 0) { showToast('⚠️ Enter at least a delivery fee or tip', 'error'); return; }
+    const gross = delivFee + tip;
+    const compCut = delivFee * 0.20;
+    const net = gross - compCut - serviceFee;
+    entries.unshift({ id: Date.now(), type: 'card', date, delivFee, tip, serviceFee, gross, compCut, net });
+    clearCardFields();
+    showToast('💳 Card order added! Net: $' + net.toFixed(2), 'success');
 
-let companyPayout=cardTotal-(cashCompanyCuts+cashServiceFees)
+  } else if (currentType === 'cash') {
+    const delivFee = parseFloat(document.getElementById('cashDelivFee').value) || 0;
+    const tip = parseFloat(document.getElementById('cashTip').value) || 0;
+    const serviceFee = parseFloat(document.getElementById('cashServiceFee').value) || 0;
+    if (delivFee + tip === 0) { showToast('⚠️ Enter at least a delivery fee or tip', 'error'); return; }
+    const gross = delivFee + tip;
+    const compCut = delivFee * 0.20; // owed to company, deducted from card payout
+    const cashKept = gross; // you keep ALL cash
+    const cardDeduction = compCut + serviceFee; // deducted from card orders
+    entries.unshift({ id: Date.now(), type: 'cash', date, delivFee, tip, serviceFee, gross, compCut, cashKept, cardDeduction });
+    clearCashFields();
+    showToast('💵 Cash order added! You kept $' + cashKept.toFixed(2), 'success');
 
-let grand=cardTotal+cashTotal
+  } else if (currentType === 'gas') {
+    const amount = parseFloat(document.getElementById('gasAmount').value) || 0;
+    const note = document.getElementById('gasNote').value || 'Gas';
+    if (amount === 0) { showToast('⚠️ Enter a gas amount', 'error'); return; }
+    entries.unshift({ id: Date.now(), type: 'gas', date, amount, note });
+    document.getElementById('gasAmount').value = '';
+    document.getElementById('gasNote').value = '';
+    showToast('⛽ Gas expense added: -$' + amount.toFixed(2), 'success');
+  }
 
-let gas=parseFloat(document.getElementById("gas").value)||0
-
-let profit=grand-gas
-
-document.getElementById("cardTotal").innerText=cardTotal.toFixed(2)
-document.getElementById("cashTotal").innerText=cashTotal.toFixed(2)
-document.getElementById("tipsTotal").innerText=tips.toFixed(2)
-document.getElementById("companyPayout").innerText=companyPayout.toFixed(2)
-document.getElementById("grandTotal").innerText=grand.toFixed(2)
-
-let profitEl=document.getElementById("profit")
-profitEl.innerText=profit.toFixed(2)
-profitEl.className=profit>=0?"green":"red"
-
-let chart=document.getElementById("chart")
-chart.innerHTML=""
-
-let max=Math.max(...Object.values(daily),10)
-
-Object.entries(daily).slice(-7).forEach(([date,total])=>{
-
-let height=(total/max)*120
-
-chart.innerHTML+=`
-<div class="bar" style="height:${height}px">
-<span>${new Date(date).getDate()}</span>
-</div>
-`
-
-})
-
+  save();
+  renderAll();
 }
 
-function removeDelivery(i){
-
-deliveries.splice(i,1)
-render()
-
+function clearCardFields() {
+  ['cardDelivFee','cardTip','cardServiceFee'].forEach(id => document.getElementById(id).value = '');
+}
+function clearCashFields() {
+  ['cashDelivFee','cashTip','cashServiceFee'].forEach(id => document.getElementById(id).value = '');
 }
 
-document.getElementById("gas").addEventListener("input",render)
+// ─── Period Logic ─────────────────────────────────────
+function getPeriodRange(period) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const day = now.getDate();
 
+  if (period === 'current') {
+    if (day >= 16) {
+      // 16th to end of month → payout on 1st
+      return { start: new Date(year, month, 16), end: new Date(year, month+1, 0), payoutLabel: '1st', payoutMonth: month+1, payoutYear: year + (month===11?1:0) };
+    } else {
+      // 1st to 15th → payout on 16th
+      return { start: new Date(year, month, 1), end: new Date(year, month, 15), payoutLabel: '16th', payoutMonth: month, payoutYear: year };
+    }
+  } else {
+    // next period
+    if (day >= 16) {
+      const nm = month+1 > 11 ? 0 : month+1;
+      const ny = month+1 > 11 ? year+1 : year;
+      return { start: new Date(ny, nm, 1), end: new Date(ny, nm, 15), payoutLabel: '16th', payoutMonth: nm, payoutYear: ny };
+    } else {
+      return { start: new Date(year, month, 16), end: new Date(year, month+1, 0), payoutLabel: '1st', payoutMonth: month+1, payoutYear: year };
+    }
+  }
+}
+
+function switchPeriod(p) {
+  currentPeriod = p;
+  document.getElementById('tabCurrent').className = 'period-tab' + (p==='current'?' active':'');
+  document.getElementById('tabNext').className = 'period-tab' + (p==='next'?' active':'');
+  renderPayouts();
+}
+
+// ─── Render All ───────────────────────────────────────
+function renderAll() {
+  renderSummary();
+  renderPayouts();
+  renderChart();
+  renderHistory();
+}
+
+function renderSummary() {
+  let totalGross = 0, totalNet = 0, totalGas = 0, totalDeducted = 0;
+  let totalTips = 0, totalDelivFees = 0, totalServiceFees = 0;
+
+  entries.forEach(e => {
+    if (e.type === 'card') {
+      totalGross += e.gross;
+      totalNet += e.net;
+      totalDeducted += e.compCut + e.serviceFee;
+      totalTips += e.tip;
+      totalDelivFees += e.delivFee;
+      totalServiceFees += e.serviceFee;
+    } else if (e.type === 'cash') {
+      totalGross += e.gross;
+      totalDeducted += e.cardDeduction; // tracked deduction from card payout
+      totalTips += e.tip;
+      totalDelivFees += e.delivFee;
+      totalServiceFees += e.serviceFee;
+    } else if (e.type === 'gas') {
+      totalGas += e.amount;
+    }
+  });
+
+  // Net = card net amounts + all cash kept - gas
+  let cardNet = 0, cashNet = 0;
+  entries.forEach(e => {
+    if (e.type === 'card') cardNet += e.net;
+    if (e.type === 'cash') cashNet += e.cashKept;
+  });
+  totalNet = cardNet + cashNet - totalGas;
+
+  document.getElementById('sumTotal').textContent = '$' + totalGross.toFixed(2);
+  document.getElementById('sumNet').textContent = '$' + totalNet.toFixed(2);
+  document.getElementById('sumNet').className = 'sum-value ' + (totalNet >= 0 ? 'pos' : 'neg');
+  document.getElementById('sumGas').textContent = '$' + totalGas.toFixed(2);
+  document.getElementById('sumDeducted').textContent = '$' + totalDeducted.toFixed(2);
+  document.getElementById('totalTips').textContent = '$' + totalTips.toFixed(2);
+  document.getElementById('totalDelivFee').textContent = '$' + totalDelivFees.toFixed(2);
+  document.getElementById('totalServiceFee').textContent = '$' + totalServiceFees.toFixed(2);
+}
+
+function renderPayouts() {
+  const range = getPeriodRange(currentPeriod);
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Filter entries in range (card only — cash orders deduct FROM card payout)
+  const periodEntries = entries.filter(e => {
+    const d = parseDate(e.date);
+    return d >= range.start && d <= range.end;
+  });
+
+  let cardNet = 0, cashDeductions = 0;
+  periodEntries.forEach(e => {
+    if (e.type === 'card') cardNet += e.net;
+    if (e.type === 'cash') cashDeductions += e.cardDeduction;
+  });
+
+  const payout = cardNet - cashDeductions;
+  const payLabel = monthNames[range.payoutMonth % 12] + ' ' + range.payoutLabel;
+
+  // Show in boxes
+  const now = new Date();
+  const isFirst = now.getDate() < 16;
+
+  if (isFirst) {
+    // current period ends 15th, paid 16th
+    document.getElementById('payDate1').textContent = 'Next 1st';
+    document.getElementById('pay1').textContent = '$0.00';
+    document.getElementById('pay1note').textContent = 'future period';
+    document.getElementById('payDate16').textContent = payLabel;
+    document.getElementById('pay16').textContent = (payout < 0 ? '-' : '') + '$' + Math.abs(payout).toFixed(2);
+    document.getElementById('pay16').className = 'pb-amount';
+    document.getElementById('pay16').style.color = payout < 0 ? 'var(--red)' : 'var(--accent)';
+    document.getElementById('pay16note').textContent = payout < 0 ? '⚠️ Cash deductions exceed card' : 'estimated payout';
+  } else {
+    document.getElementById('payDate16').textContent = 'Next 16th';
+    document.getElementById('pay16').textContent = '$0.00';
+    document.getElementById('pay16note').textContent = 'future period';
+    document.getElementById('payDate1').textContent = payLabel;
+    document.getElementById('pay1').textContent = (payout < 0 ? '-' : '') + '$' + Math.abs(payout).toFixed(2);
+    document.getElementById('pay1').className = 'pb-amount';
+    document.getElementById('pay1').style.color = payout < 0 ? 'var(--red)' : 'var(--green)';
+    document.getElementById('pay1note').textContent = payout < 0 ? '⚠️ Cash deductions exceed card' : 'estimated payout';
+  }
+}
+
+// ─── Chart ────────────────────────────────────────────
+function renderChart() {
+  const chart = document.getElementById('barChart');
+
+  // Last 14 days
+  const days = [];
+  const today = new Date();
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push(formatDate(d));
+  }
+
+  const dayTotals = {};
+  days.forEach(d => dayTotals[d] = 0);
+
+  entries.forEach(e => {
+    if (!days.includes(e.date)) return;
+    if (e.type === 'card') dayTotals[e.date] += e.net;
+    else if (e.type === 'cash') dayTotals[e.date] += e.cashKept;
+    else if (e.type === 'gas') dayTotals[e.date] -= e.amount;
+  });
+
+  const vals = days.map(d => dayTotals[d]);
+  const maxAbs = Math.max(...vals.map(v => Math.abs(v)), 1);
+
+  chart.innerHTML = '';
+  const hasData = vals.some(v => v !== 0);
+  if (!hasData) {
+    chart.innerHTML = '<div class="chart-empty">No data yet — add some deliveries!</div>';
+    return;
+  }
+
+  days.forEach((d, i) => {
+    const val = vals[i];
+    const pct = Math.abs(val) / maxAbs * 90;
+    const dt = parseDate(d);
+    const label = dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const isToday = d === formatDate(today);
+
+    const group = document.createElement('div');
+    group.className = 'bar-group';
+
+    const barWrap = document.createElement('div');
+    barWrap.className = 'bar-wrap';
+
+    const bar = document.createElement('div');
+    bar.className = 'bar ' + (val >= 0 ? 'positive' : 'negative');
+    bar.style.height = pct + '%';
+    if (isToday) bar.style.filter = 'brightness(1.3)';
+    bar.title = label + ': $' + val.toFixed(2);
+
+    barWrap.appendChild(bar);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'bar-label';
+    lbl.textContent = isToday ? '📍' : label.split(' ')[1];
+
+    const valEl = document.createElement('div');
+    valEl.className = 'bar-val';
+    valEl.textContent = val !== 0 ? (val < 0 ? '-' : '') + '$' + Math.abs(val).toFixed(0) : '';
+    valEl.style.color = val >= 0 ? 'var(--green)' : 'var(--red)';
+
+    group.appendChild(barWrap);
+    group.appendChild(lbl);
+    group.appendChild(valEl);
+    chart.appendChild(group);
+  });
+}
+
+// ─── History ──────────────────────────────────────────
+function setFilter(f) {
+  histFilter = f;
+  currentPage = 1;
+  ['all','card','cash','gas'].forEach(x => {
+    document.getElementById('f' + x.charAt(0).toUpperCase() + x.slice(1)).className =
+      'filter-btn' + (x === f ? ' active' : '');
+  });
+  renderHistory();
+}
+
+function renderHistory() {
+  const filtered = entries.filter(e => histFilter === 'all' || e.type === histFilter);
+  document.getElementById('historyCount').textContent = filtered.length + ' entries';
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filtered.slice(start, start + PAGE_SIZE);
+
+  const list = document.getElementById('historyList');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">📭</div><p>No entries yet. Add your first delivery!</p></div>';
+  } else {
+    list.innerHTML = page.map(e => renderHistoryItem(e)).join('');
+  }
+
+  // Pagination
+  const pg = document.getElementById('pagination');
+  pg.innerHTML = '';
+  if (totalPages <= 1) return;
+
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+    btn.textContent = i;
+    btn.onclick = () => { currentPage = i; renderHistory(); };
+    pg.appendChild(btn);
+  }
+}
+
+function renderHistoryItem(e) {
+  const icon = e.type === 'card' ? '💳' : e.type === 'cash' ? '💵' : '⛽';
+  const iconClass = 'hi-' + e.type;
+  let title, breakdown, amount, amtClass;
+
+  if (e.type === 'card') {
+    title = 'Card Delivery';
+    breakdown = `Gross $${e.gross.toFixed(2)} · Co. cut -$${e.compCut.toFixed(2)} · Svc fee -$${e.serviceFee.toFixed(2)}`;
+    amount = '+$' + e.net.toFixed(2);
+    amtClass = 'pos';
+  } else if (e.type === 'cash') {
+    title = 'Cash Delivery';
+    breakdown = `Cash kept $${e.cashKept.toFixed(2)} · Card deduction -$${e.cardDeduction.toFixed(2)}`;
+    amount = '💵 $' + e.cashKept.toFixed(2);
+    amtClass = 'pos';
+  } else {
+    title = e.note || 'Gas Expense';
+    breakdown = 'Deducted from net earnings';
+    amount = '-$' + e.amount.toFixed(2);
+    amtClass = 'neg';
+  }
+
+  const dateStr = parseDate(e.date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+  return `
+    <div class="history-item">
+      <div class="history-icon ${iconClass}">${icon}</div>
+      <div class="history-info">
+        <div class="hi-title">${title}</div>
+        <div class="hi-date">📅 ${dateStr}</div>
+        <div class="hi-breakdown">${breakdown}</div>
+      </div>
+      <div class="history-amount ${amtClass}">${amount}</div>
+      <button class="del-btn" onclick="deleteEntry(${e.id})" title="Delete">🗑</button>
+    </div>`;
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  save();
+  renderAll();
+  showToast('🗑 Entry deleted', 'success');
+}
+
+function clearAll() {
+  if (confirm('Clear ALL entries? This cannot be undone.')) {
+    entries = [];
+    save();
+    renderAll();
+    showToast('🗑 All entries cleared', 'success');
+  }
+}
+
+// ─── Calendar ─────────────────────────────────────────
+function openCal() {
+  calDate = new Date(selectedDate);
+  renderCal();
+  document.getElementById('calPopup').classList.add('open');
+  document.getElementById('calOverlay').classList.add('open');
+  // Position near input
+  const input = document.getElementById('entryDate');
+  const rect = input.getBoundingClientRect();
+  const popup = document.getElementById('calPopup');
+  let top = rect.bottom + window.scrollY + 6;
+  let left = rect.left + window.scrollX;
+  if (left + 290 > window.innerWidth) left = window.innerWidth - 300;
+  popup.style.top = top + 'px';
+  popup.style.left = left + 'px';
+}
+
+function closeCal() {
+  document.getElementById('calPopup').classList.remove('open');
+  document.getElementById('calOverlay').classList.remove('open');
+}
+
+function calNav(dir) {
+  calDate.setMonth(calDate.getMonth() + dir);
+  renderCal();
+}
+
+function renderCal() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthLabel').textContent = months[calDate.getMonth()] + ' ' + calDate.getFullYear();
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-day-name';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const first = new Date(calDate.getFullYear(), calDate.getMonth(), 1);
+  const last = new Date(calDate.getFullYear(), calDate.getMonth() + 1, 0);
+  const today = formatDate(new Date());
+  const selected = formatDate(selectedDate);
+
+  // Pad start
+  for (let i = 0; i < first.getDay(); i++) {
+    const prev = new Date(calDate.getFullYear(), calDate.getMonth(), -first.getDay() + i + 1);
+    const el = document.createElement('div');
+    el.className = 'cal-day other-month';
+    el.textContent = prev.getDate();
+    grid.appendChild(el);
+  }
+
+  for (let d = 1; d <= last.getDate(); d++) {
+    const date = new Date(calDate.getFullYear(), calDate.getMonth(), d);
+    const dateStr = formatDate(date);
+    const el = document.createElement('div');
+    el.className = 'cal-day' + (dateStr === today ? ' today' : '') + (dateStr === selected ? ' selected' : '');
+    el.textContent = d;
+    el.onclick = () => { setDateInput(date); closeCal(); };
+    grid.appendChild(el);
+  }
+}
+
+// ─── Storage ──────────────────────────────────────────
+function save() { localStorage.setItem('kb_entries', JSON.stringify(entries)); }
+
+// ─── Toast ────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg;
+  t.className = 'show ' + (type||'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3000);
+}
+
+// ─── Start ────────────────────────────────────────────
+init();
 </script>
 
 </body>

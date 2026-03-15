@@ -6,8 +6,6 @@
 
 <title>Driver Earnings Tracker</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
 
 :root{
@@ -15,7 +13,6 @@
 --card:#1e1e1e;
 --border:#2a2a2a;
 --text:#f2f2f2;
---accent:#3b82f6;
 --green:#22c55e;
 --red:#ef4444;
 --cash:#16a34a;
@@ -27,7 +24,7 @@ margin:0;
 font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
 background:var(--bg);
 color:var(--text);
-padding:15px;
+padding:16px;
 }
 
 .container{
@@ -45,6 +42,7 @@ padding:18px;
 border:1px solid var(--border);
 width:100%;
 box-sizing:border-box;
+overflow:hidden;
 }
 
 h1,h3{
@@ -63,8 +61,15 @@ font-weight:bold;
 margin-top:10px;
 }
 
+label{
+display:block;
+margin-top:10px;
+}
+
 input,select{
+display:block;
 width:100%;
+max-width:100%;
 padding:12px;
 border-radius:10px;
 border:1px solid var(--border);
@@ -75,12 +80,21 @@ box-sizing:border-box;
 font-size:16px;
 }
 
+input[type="date"]{
+width:100%;
+max-width:100%;
+display:block;
+box-sizing:border-box;
+-webkit-appearance:none;
+appearance:none;
+}
+
 button{
 width:100%;
 padding:14px;
 border:none;
 border-radius:12px;
-margin-top:10px;
+margin-top:12px;
 background:linear-gradient(45deg,#4f9cff,#2563eb);
 color:white;
 font-weight:bold;
@@ -103,8 +117,8 @@ text-align:center;
 
 .delivery{
 position:relative;
-overflow:hidden;
 border-bottom:1px solid var(--border);
+overflow:hidden;
 }
 
 .deliveryContent{
@@ -113,7 +127,7 @@ background:var(--card);
 display:flex;
 justify-content:space-between;
 align-items:center;
-transition:transform .3s;
+transition:transform .25s;
 }
 
 .deleteBtn{
@@ -143,7 +157,6 @@ font-weight:bold;
 .pagination{
 display:flex;
 justify-content:center;
-align-items:center;
 gap:10px;
 margin-top:10px;
 }
@@ -179,25 +192,10 @@ flex:1;
 
 <div class="dashboard">
 
-<div>
-Today<br>
-<strong id="today">0</strong>
-</div>
-
-<div>
-This Week<br>
-<strong id="week">0</strong>
-</div>
-
-<div>
-Company Payout<br>
-<strong id="companyPayout">0</strong>
-</div>
-
-<div>
-Deliveries<br>
-<strong id="deliveries">0</strong>
-</div>
+<div>Today<br><strong id="today">0</strong></div>
+<div>This Week<br><strong id="week">0</strong></div>
+<div>Company Payout<br><strong id="companyPayout">0</strong></div>
+<div>Deliveries<br><strong id="deliveries">0</strong></div>
 
 </div>
 
@@ -221,9 +219,8 @@ Deliveries<br>
 
 <h3>Company Pay Period</h3>
 
-<div class="stat"><span>1st – 15th Payout</span><span>$<span id="pay1">0</span></span></div>
-
-<div class="stat"><span>16th – End Payout</span><span>$<span id="pay2">0</span></span></div>
+<div class="stat"><span>1–15 Payout</span><span>$<span id="pay1">0</span></span></div>
+<div class="stat"><span>16–End Payout</span><span>$<span id="pay2">0</span></span></div>
 
 </div>
 
@@ -245,7 +242,7 @@ Deliveries<br>
 <label>Tip</label>
 <input id="tip" type="number">
 
-<label>Service Fee (cash only)</label>
+<label>Service Fee</label>
 <input id="serviceFee" type="number">
 
 <button onclick="addDelivery()">Add Delivery</button>
@@ -294,6 +291,8 @@ let deliveries=[]
 let db
 let currentPage=1
 const perPage=10
+
+let startX=0
 
 let request=indexedDB.open("driverDB",1)
 
@@ -361,7 +360,6 @@ tx.oncomplete=loadData
 function exportData(){
 
 let blob=new Blob([JSON.stringify(deliveries)],{type:"application/json"})
-
 let url=URL.createObjectURL(blob)
 
 let a=document.createElement("a")
@@ -419,18 +417,17 @@ history.innerHTML+=`
 
 <div class="delivery">
 
-<div class="deleteBtn" onclick="deleteDelivery(${d.id})">
-Delete
-</div>
+<div class="deleteBtn" onclick="deleteDelivery(${d.id})">Delete</div>
 
-<div class="deliveryContent" ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)">
+<div class="deliveryContent"
+ontouchstart="startSwipe(event)"
+ontouchmove="moveSwipe(event)">
 
 <div>
 
 <span class="badge ${badge}">${label}</span>
-
-<strong>$${d.earning.toFixed(2)}</strong><br>
-
+<strong>$${d.earning.toFixed(2)}</strong>
+<br>
 <small>${d.date}</small>
 
 </div>
@@ -446,6 +443,7 @@ Delete
 deliveries.forEach(d=>{
 
 if(d.type==="card"){
+
 cardTotal+=d.earning
 
 let day=new Date(d.date).getDate()
@@ -454,8 +452,10 @@ if(day<=15) pay1+=d.earning
 else pay2+=d.earning
 
 }else{
+
 cashTotal+=d.earning
 serviceTotal+=d.service
+
 }
 
 tipsTotal+=d.tip
@@ -479,13 +479,12 @@ document.getElementById("pay1").innerText=pay1.toFixed(2)
 document.getElementById("pay2").innerText=pay2.toFixed(2)
 
 let profitEl=document.getElementById("profit")
+
 profitEl.innerText=profit.toFixed(2)
 profitEl.className=profit>=0?"profitGreen":"profitRed"
 
 let pages=Math.ceil(deliveries.length/perPage)||1
 document.getElementById("pageInfo").innerText=`Page ${currentPage}/${pages}`
-
-enableSwipe()
 
 }
 
@@ -504,25 +503,18 @@ render()
 }
 }
 
-let startX=0
-
-function touchStart(e){
+function startSwipe(e){
 startX=e.touches[0].clientX
 }
 
-function touchMove(e){
-let moveX=e.touches[0].clientX
-let diff=startX-moveX
+function moveSwipe(e){
+
+let diff=startX-e.touches[0].clientX
 
 if(diff>30){
 e.currentTarget.style.transform="translateX(-80px)"
 }
-}
 
-function touchEnd(e){
-}
-
-function enableSwipe(){
 }
 
 document.getElementById("gas").addEventListener("input",render)

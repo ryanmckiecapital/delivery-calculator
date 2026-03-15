@@ -232,48 +232,38 @@ border-radius: 10px;
 color: var(–text);
 padding: 11px 14px;
 font-family: var(–font-body);
-font-size: 0.95rem;
+font-size: 1rem;
 outline: none;
 width: 100%;
 -webkit-appearance: none;
 appearance: none;
 cursor: pointer;
-min-height: 44px;
+min-height: 48px;
+display: block;
+box-sizing: border-box;
 }
 input[type=‘date’]:focus { border-color: var(–accent); }
+/* Force white text on Safari iOS — overrides the blue system color */
+input[type=‘date’]::-webkit-datetime-edit { color: var(–text); padding: 0; }
+input[type=‘date’]::-webkit-datetime-edit-fields-wrapper { color: var(–text); }
+input[type=‘date’]::-webkit-datetime-edit-text { color: var(–muted); }
+input[type=‘date’]::-webkit-datetime-edit-month-field { color: var(–text); }
+input[type=‘date’]::-webkit-datetime-edit-day-field { color: var(–text); }
+input[type=‘date’]::-webkit-datetime-edit-year-field { color: var(–text); }
 input[type=‘date’]::-webkit-calendar-picker-indicator {
-filter: invert(0.7);
+background: transparent;
+color: var(–muted);
 cursor: pointer;
-padding: 4px;
+font-size: 1.1rem;
+padding: 2px 0 2px 6px;
 }
 
 ```
 /* ─── Bar Chart ───────────────────────── */
 ```
 
-.chart-wrap { overflow-x: auto; padding-bottom: 4px; }
-.bar-chart {
-display: flex;
-align-items: flex-end;
-gap: 6px;
-height: 140px;
-min-width: 100%;
-padding: 0 2px;
-}
-.bar-group { flex: 1; min-width: 32px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.bar-wrap { width: 100%; flex: 1; display: flex; align-items: flex-end; }
-.bar {
-width: 100%;
-border-radius: 6px 6px 0 0;
-transition: height 0.4s cubic-bezier(.4,0,.2,1);
-min-height: 3px;
-position: relative;
-cursor: pointer;
-}
-.bar.positive { background: linear-gradient(180deg, var(–green), rgba(34,197,94,0.4)); }
-.bar.negative { background: linear-gradient(180deg, var(–red), rgba(239,68,68,0.4)); }
-.bar-label { font-size: 0.62rem; color: var(–muted); text-align: center; white-space: nowrap; }
-.bar-val { font-size: 0.62rem; color: var(–muted); text-align: center; }
+.chart-wrap { width: 100%; }
+#barCanvas { width: 100%; display: block; border-radius: 8px; }
 .chart-empty { text-align: center; color: var(–faint); font-size: 0.85rem; padding: 40px 0; }
 
 /* ─── History ─────────────────────────── */
@@ -519,7 +509,9 @@ border: 1px solid var(–border);
 <div style="margin-bottom:12px">
   <div class="form-group">
     <label>📆 Date</label>
-    <input type="date" id="entryDate" style="cursor:pointer;">
+    <div style="position:relative;">
+      <input type="date" id="entryDate">
+    </div>
   </div>
 </div>
 
@@ -589,9 +581,8 @@ border: 1px solid var(–border);
   <div class="card">
     <div class="card-title">📊 Daily Earnings <span class="badge">Last 14 days</span></div>
     <div class="chart-wrap">
-      <div class="bar-chart" id="barChart">
-        <div class="chart-empty">No data yet — add some deliveries!</div>
-      </div>
+      <canvas id="barCanvas" height="180"></canvas>
+      <div id="chartEmpty" class="chart-empty" style="display:none">No data yet — add some deliveries!</div>
     </div>
   </div>
 
@@ -849,20 +840,20 @@ function renderPayouts() {
 
 // ─── Chart ────────────────────────────────────────────
 function renderChart() {
-  const chart = document.getElementById('barChart');
+  const canvas = document.getElementById('barCanvas');
+  const empty = document.getElementById('chartEmpty');
+  const ctx = canvas.getContext('2d');
 
   // Last 14 days
   const days = [];
   const today = new Date();
   for (let i = 13; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
     days.push(formatDate(d));
   }
 
   const dayTotals = {};
   days.forEach(d => dayTotals[d] = 0);
-
   entries.forEach(e => {
     if (!days.includes(e.date)) return;
     if (e.type === 'card') dayTotals[e.date] += e.net;
@@ -871,51 +862,95 @@ function renderChart() {
   });
 
   const vals = days.map(d => dayTotals[d]);
-  const maxAbs = Math.max(...vals.map(v => Math.abs(v)), 1);
-
-  chart.innerHTML = '';
   const hasData = vals.some(v => v !== 0);
+
   if (!hasData) {
-    chart.innerHTML = '<div class="chart-empty">No data yet — add some deliveries!</div>';
+    canvas.style.display = 'none';
+    empty.style.display = 'block';
     return;
   }
+  canvas.style.display = 'block';
+  empty.style.display = 'none';
+
+  // Retina / device pixel ratio
+  const dpr = window.devicePixelRatio || 1;
+  const cssWidth = canvas.parentElement.clientWidth || 320;
+  const cssHeight = 180;
+  canvas.width = cssWidth * dpr;
+  canvas.height = cssHeight * dpr;
+  canvas.style.width = cssWidth + 'px';
+  canvas.style.height = cssHeight + 'px';
+  ctx.scale(dpr, dpr);
+
+  ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+  const padTop = 24, padBottom = 36, padLeft = 8, padRight = 8;
+  const chartH = cssHeight - padTop - padBottom;
+  const chartW = cssWidth - padLeft - padRight;
+  const n = days.length;
+  const barW = Math.floor(chartW / n * 0.6);
+  const gap = chartW / n;
+
+  const maxVal = Math.max(...vals.map(v => Math.abs(v)), 1);
 
   days.forEach((d, i) => {
     const val = vals[i];
-    const pct = Math.abs(val) / maxAbs * 90;
-    const dt = parseDate(d);
-    const label = dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const x = padLeft + i * gap + gap / 2;
+    const barH = Math.max(Math.abs(val) / maxVal * chartH * 0.85, val !== 0 ? 4 : 0);
     const isToday = d === formatDate(today);
+    const isPos = val >= 0;
 
-    const group = document.createElement('div');
-    group.className = 'bar-group';
+    // Bar
+    if (val !== 0) {
+      const grad = ctx.createLinearGradient(0, padTop, 0, padTop + chartH);
+      if (isPos) {
+        grad.addColorStop(0, '#22c55e');
+        grad.addColorStop(1, 'rgba(34,197,94,0.3)');
+      } else {
+        grad.addColorStop(0, '#ef4444');
+        grad.addColorStop(1, 'rgba(239,68,68,0.3)');
+      }
+      ctx.fillStyle = isToday ? (isPos ? '#4ade80' : '#f87171') : grad;
+      const barX = x - barW / 2;
+      const barY = padTop + chartH - barH;
+      const r = Math.min(4, barW / 2);
+      ctx.beginPath();
+      ctx.moveTo(barX + r, barY);
+      ctx.lineTo(barX + barW - r, barY);
+      ctx.quadraticCurveTo(barX + barW, barY, barX + barW, barY + r);
+      ctx.lineTo(barX + barW, barY + barH);
+      ctx.lineTo(barX, barY + barH);
+      ctx.lineTo(barX, barY + r);
+      ctx.quadraticCurveTo(barX, barY, barX + r, barY);
+      ctx.closePath();
+      ctx.fill();
 
-    const barWrap = document.createElement('div');
-    barWrap.className = 'bar-wrap';
+      // Value label above bar
+      ctx.fillStyle = isPos ? '#22c55e' : '#ef4444';
+      ctx.font = (dpr > 1 ? '500 ' : '') + '9px DM Sans, sans-serif';
+      ctx.textAlign = 'center';
+      const valLabel = '$' + Math.abs(val).toFixed(0);
+      ctx.fillText(valLabel, x, barY - 4);
+    }
 
-    const bar = document.createElement('div');
-    bar.className = 'bar ' + (val >= 0 ? 'positive' : 'negative');
-    bar.style.height = pct + '%';
-    if (isToday) bar.style.filter = 'brightness(1.3)';
-    bar.title = label + ': $' + val.toFixed(2);
-
-    barWrap.appendChild(bar);
-
-    const lbl = document.createElement('div');
-    lbl.className = 'bar-label';
-    lbl.textContent = isToday ? '📍' : label.split(' ')[1];
-
-    const valEl = document.createElement('div');
-    valEl.className = 'bar-val';
-    valEl.textContent = val !== 0 ? (val < 0 ? '-' : '') + '$' + Math.abs(val).toFixed(0) : '';
-    valEl.style.color = val >= 0 ? 'var(--green)' : 'var(--red)';
-
-    group.appendChild(barWrap);
-    group.appendChild(lbl);
-    group.appendChild(valEl);
-    chart.appendChild(group);
+    // Day label
+    const dt = parseDate(d);
+    const dayNum = dt.getDate();
+    ctx.fillStyle = isToday ? '#f97316' : '#64748b';
+    ctx.font = isToday ? 'bold 10px DM Sans, sans-serif' : '10px DM Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(isToday ? '▼' + dayNum : dayNum, x, cssHeight - padBottom + 14);
   });
+
+  // Baseline
+  ctx.strokeStyle = '#243049';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padLeft, padTop + chartH);
+  ctx.lineTo(cssWidth - padRight, padTop + chartH);
+  ctx.stroke();
 }
+
 
 // ─── History ──────────────────────────────────────────
 function setFilter(f) {

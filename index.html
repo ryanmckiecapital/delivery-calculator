@@ -13,9 +13,9 @@
 :root{
 --bg:#121212;
 --card:#1e1e1e;
---border:#333;
---text:#f1f1f1;
---accent:#4f9cff;
+--border:#2a2a2a;
+--text:#f2f2f2;
+--accent:#3b82f6;
 --green:#22c55e;
 --red:#ef4444;
 --cash:#16a34a;
@@ -27,25 +27,28 @@ margin:0;
 font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
 background:var(--bg);
 color:var(--text);
-padding:18px;
+padding:15px;
 }
 
 .container{
 max-width:520px;
 margin:auto;
+display:flex;
+flex-direction:column;
+gap:16px;
 }
 
 .card{
 background:var(--card);
 border-radius:16px;
 padding:18px;
-margin-bottom:16px;
 border:1px solid var(--border);
+width:100%;
+box-sizing:border-box;
 }
 
-h1{
+h1,h3{
 margin-top:0;
-font-size:22px;
 }
 
 .stat{
@@ -68,6 +71,7 @@ border:1px solid var(--border);
 margin-top:6px;
 background:#111;
 color:white;
+box-sizing:border-box;
 }
 
 button{
@@ -76,60 +80,69 @@ padding:14px;
 border:none;
 border-radius:12px;
 margin-top:10px;
-background:linear-gradient(45deg,#4f9cff,#3b82f6);
+background:linear-gradient(45deg,#4f9cff,#2563eb);
 color:white;
 font-weight:bold;
-font-size:16px;
+font-size:15px;
 }
 
 .delivery{
 border-bottom:1px solid var(--border);
-padding:10px 0;
+padding:12px 0;
 display:flex;
 justify-content:space-between;
 align-items:center;
 }
 
 .badge{
-padding:3px 8px;
+padding:4px 8px;
 border-radius:6px;
-font-size:12px;
+font-size:11px;
 font-weight:bold;
 }
 
-.cash{
-background:var(--cash);
-}
+.cash{background:var(--cash)}
+.cardbadge{background:var(--cardblue)}
 
-.cardbadge{
-background:var(--cardblue);
+.historyButtons{
+display:flex;
+gap:6px;
 }
 
 .historyButtons button{
 width:auto;
 padding:6px 10px;
-margin-left:6px;
 }
 
 .pagination{
 display:flex;
 justify-content:center;
 align-items:center;
-margin-top:10px;
 gap:10px;
+margin-top:10px;
 }
 
 .pagebtn{
 width:auto;
-padding:8px 12px;
-}
-
-.gasInput{
-width:80px;
+padding:6px 10px;
 }
 
 .profitGreen{color:var(--green);font-weight:bold;}
 .profitRed{color:var(--red);font-weight:bold;}
+
+.dashboard{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+margin-bottom:10px;
+}
+
+.dashboard div{
+background:#111;
+padding:10px;
+border-radius:10px;
+text-align:center;
+}
 
 </style>
 </head>
@@ -142,7 +155,29 @@ width:80px;
 
 <h1>Driver Dashboard</h1>
 
-<div class="stat"><span>Deliveries</span><span id="deliveries">0</span></div>
+<div class="dashboard">
+
+<div>
+Today<br>
+<strong id="today">0</strong>
+</div>
+
+<div>
+This Week<br>
+<strong id="week">0</strong>
+</div>
+
+<div>
+Company Payout<br>
+<strong id="companyPayout">0</strong>
+</div>
+
+<div>
+Deliveries<br>
+<strong id="deliveries">0</strong>
+</div>
+
+</div>
 
 <div class="stat"><span>Card Earnings</span><span>$<span id="cardTotal">0</span></span></div>
 
@@ -150,9 +185,7 @@ width:80px;
 
 <div class="stat"><span>Tips</span><span>$<span id="tipsTotal">0</span></span></div>
 
-<div class="stat"><span>Company Payout</span><span>$<span id="companyPayout">0</span></span></div>
-
-<div class="stat"><span>Gas</span><span>$ <input id="gas" class="gasInput" type="number" value="0"></span></div>
+<div class="stat"><span>Gas</span><span>$ <input id="gas" type="number" value="0"></span></div>
 
 <div class="stat"><span>Profit After Gas</span><span>$<span id="profit">0</span></span></div>
 
@@ -167,7 +200,6 @@ width:80px;
 <input id="date" type="date">
 
 <label>Delivery Type</label>
-
 <select id="type">
 <option value="card">Card Delivery</option>
 <option value="cash">Cash Delivery</option>
@@ -190,6 +222,7 @@ width:80px;
 <div class="card">
 
 <h3>Earnings Chart</h3>
+
 <canvas id="chart"></canvas>
 
 </div>
@@ -211,132 +244,135 @@ width:80px;
 
 </div>
 
-<button onclick="exportCSV()">Export Excel File</button>
+<button onclick="exportCSV()">Export Excel</button>
+
+<button onclick="exportBackup()">Export Backup</button>
+
+<input type="file" id="importFile" style="display:none">
+
+<button onclick="document.getElementById('importFile').click()">Import Backup</button>
 
 </div>
 
 </div>
-
 
 <script>
 
-let deliveries = JSON.parse(localStorage.getItem("deliveries")) || []
+let deliveries=[]
+let db
+let currentPage=1
+const perPage=10
 
-let currentPage = 1
-const perPage = 10
+let request=indexedDB.open("driverDB",1)
 
-document.getElementById("date").valueAsDate = new Date()
+request.onupgradeneeded=e=>{
+db=e.target.result
+db.createObjectStore("deliveries",{keyPath:"id",autoIncrement:true})
+}
 
-function save(){
+request.onsuccess=e=>{
+db=e.target.result
+loadData()
+}
 
-localStorage.setItem("deliveries",JSON.stringify(deliveries))
+function loadData(){
+
+let tx=db.transaction("deliveries","readonly")
+let store=tx.objectStore("deliveries")
+
+store.getAll().onsuccess=e=>{
+deliveries=e.target.result
+render()
+}
+
+}
+
+function saveDelivery(data){
+
+let tx=db.transaction("deliveries","readwrite")
+tx.objectStore("deliveries").add(data)
+tx.oncomplete=loadData
 
 }
 
 function addDelivery(){
 
 let date=document.getElementById("date").value
-
 let type=document.getElementById("type").value
-
 let fee=parseFloat(document.getElementById("deliveryFee").value)||0
-
 let tip=parseFloat(document.getElementById("tip").value)||0
-
 let service=parseFloat(document.getElementById("serviceFee").value)||0
 
 let companyCut=fee*0.20
-
 let earning=(fee-companyCut)+tip
 
-if(type==="cash"){
-earning-=service
-}
+if(type==="cash") earning-=service
 
-deliveries.unshift({date,type,fee,tip,service,earning})
-
-save()
-
-render()
+saveDelivery({date,type,fee,tip,service,earning})
 
 }
 
-function deleteDelivery(i){
+function deleteDelivery(id){
 
-deliveries.splice(i,1)
-
-save()
-
-render()
+let tx=db.transaction("deliveries","readwrite")
+tx.objectStore("deliveries").delete(id)
+tx.oncomplete=loadData
 
 }
 
-function editDelivery(i){
+function editDelivery(d){
 
-let d=deliveries[i]
+let newDate=prompt("Edit date",d.date)
+let newFee=prompt("Delivery fee",d.fee)
+let newTip=prompt("Tip",d.tip)
+let newService=prompt("Service fee",d.service)
 
-let newDate=prompt("Edit Date",d.date)
+let companyCut=newFee*0.20
+let earning=(newFee-companyCut)+parseFloat(newTip||0)
 
-let newFee=prompt("Edit Delivery Fee",d.fee)
+if(d.type==="cash") earning-=parseFloat(newService||0)
 
-let newTip=prompt("Edit Tip",d.tip)
+let tx=db.transaction("deliveries","readwrite")
 
-let newService=prompt("Edit Service Fee",d.service)
+tx.objectStore("deliveries").put({
+id:d.id,
+date:newDate,
+type:d.type,
+fee:parseFloat(newFee),
+tip:parseFloat(newTip),
+service:parseFloat(newService),
+earning
+})
 
-if(newDate!==null){
-
-d.date=newDate
-
-d.fee=parseFloat(newFee)||0
-
-d.tip=parseFloat(newTip)||0
-
-d.service=parseFloat(newService)||0
-
-let companyCut=d.fee*0.20
-
-d.earning=(d.fee-companyCut)+d.tip
-
-if(d.type==="cash"){
-d.earning-=d.service
-}
-
-save()
-
-render()
-
-}
+tx.oncomplete=loadData
 
 }
 
 function render(){
 
 let start=(currentPage-1)*perPage
-
-let end=start+perPage
-
-let pageDeliveries=deliveries.slice(start,end)
+let page=deliveries.slice(start,start+perPage)
 
 let history=document.getElementById("history")
-
 history.innerHTML=""
 
 let cardTotal=0
-
 let cashTotal=0
-
 let tipsTotal=0
-
 let serviceTotal=0
+
+let today=0
+let week=0
 
 let daily={}
 
-pageDeliveries.forEach((d,i)=>{
+let now=new Date()
+let weekStart=new Date()
+weekStart.setDate(now.getDate()-7)
 
-let realIndex=start+i
+page.forEach(d=>{
 
 let badge=d.type==="cash"?"cash":"cardbadge"
-
 let label=d.type==="cash"?"CASH":"CARD"
 
 history.innerHTML+=`
@@ -357,9 +393,9 @@ history.innerHTML+=`
 
 <div class="historyButtons">
 
-<button onclick="editDelivery(${realIndex})">Edit</button>
+<button onclick='editDelivery(${JSON.stringify(d)})'>Edit</button>
 
-<button onclick="deleteDelivery(${realIndex})">Delete</button>
+<button onclick="deleteDelivery(${d.id})">Delete</button>
 
 </div>
 
@@ -371,70 +407,57 @@ history.innerHTML+=`
 
 deliveries.forEach(d=>{
 
-if(d.type==="card"){
-
-cardTotal+=d.earning
-
-}else{
-
+if(d.type==="card") cardTotal+=d.earning
+else{
 cashTotal+=d.earning
-
 serviceTotal+=d.service
-
 }
 
 tipsTotal+=d.tip
 
 if(!daily[d.date]) daily[d.date]=0
-
 daily[d.date]+=d.earning
+
+let dDate=new Date(d.date)
+
+if(d.date===now.toISOString().slice(0,10)) today+=d.earning
+
+if(dDate>=weekStart) week+=d.earning
 
 })
 
 let companyPayout=cardTotal-serviceTotal
-
 let grand=cardTotal+cashTotal
-
 let gas=parseFloat(document.getElementById("gas").value)||0
-
 let profit=grand-gas
 
-document.getElementById("deliveries").innerText=deliveries.length
-
 document.getElementById("cardTotal").innerText=cardTotal.toFixed(2)
-
 document.getElementById("cashTotal").innerText=cashTotal.toFixed(2)
-
 document.getElementById("tipsTotal").innerText=tipsTotal.toFixed(2)
-
-document.getElementById("companyPayout").innerText=companyPayout.toFixed(2)
-
 document.getElementById("grandTotal").innerText=grand.toFixed(2)
 
+document.getElementById("today").innerText=today.toFixed(2)
+document.getElementById("week").innerText=week.toFixed(2)
+document.getElementById("deliveries").innerText=deliveries.length
+document.getElementById("companyPayout").innerText=companyPayout.toFixed(2)
+
 let profitEl=document.getElementById("profit")
-
 profitEl.innerText=profit.toFixed(2)
-
 profitEl.className=profit>=0?"profitGreen":"profitRed"
 
 drawChart(daily)
 
-let totalPages=Math.ceil(deliveries.length/perPage)
-
-document.getElementById("pageInfo").innerText=`Page ${currentPage} / ${totalPages||1}`
+let pages=Math.ceil(deliveries.length/perPage)||1
+document.getElementById("pageInfo").innerText=`Page ${currentPage}/${pages}`
 
 }
 
 function nextPage(){
 
-let totalPages=Math.ceil(deliveries.length/perPage)
-
-if(currentPage<totalPages){
-
+let pages=Math.ceil(deliveries.length/perPage)
+if(currentPage<pages){
 currentPage++
-
 render()
-
 }
 
 }
@@ -442,11 +465,8 @@ render()
 function prevPage(){
 
 if(currentPage>1){
-
 currentPage--
-
 render()
-
 }
 
 }
@@ -456,7 +476,6 @@ let chart
 function drawChart(data){
 
 let labels=Object.keys(data)
-
 let values=Object.values(data)
 
 if(chart) chart.destroy()
@@ -466,17 +485,8 @@ chart=new Chart(document.getElementById("chart"),{
 type:"bar",
 
 data:{
-
 labels:labels,
-
-datasets:[{
-
-label:"Daily Earnings",
-
-data:values
-
-}]
-
+datasets:[{label:"Daily Earnings",data:values}]
 }
 
 })
@@ -485,31 +495,57 @@ data:values
 
 function exportCSV(){
 
-let csv="Date,Type,Delivery Fee,Tip,Service Fee,Earnings\n"
+let csv="Date,Type,Fee,Tip,Service,Earnings\n"
 
 deliveries.forEach(d=>{
-
 csv+=`${d.date},${d.type},${d.fee},${d.tip},${d.service},${d.earning}\n`
-
 })
 
-let blob=new Blob([csv],{type:"text/csv"})
-
+let blob=new Blob([csv])
 let url=URL.createObjectURL(blob)
 
 let a=document.createElement("a")
-
 a.href=url
-
 a.download="deliveries.csv"
-
 a.click()
 
 }
 
-document.getElementById("gas").addEventListener("input",render)
+function exportBackup(){
 
-render()
+let blob=new Blob([JSON.stringify(deliveries)])
+let url=URL.createObjectURL(blob)
+
+let a=document.createElement("a")
+a.href=url
+a.download="backup.json"
+a.click()
+
+}
+
+document.getElementById("importFile").addEventListener("change",function(){
+
+let file=this.files[0]
+let reader=new FileReader()
+
+reader.onload=e=>{
+
+let data=JSON.parse(e.target.result)
+
+let tx=db.transaction("deliveries","readwrite")
+let store=tx.objectStore("deliveries")
+
+data.forEach(d=>store.add(d))
+
+tx.oncomplete=loadData
+
+}
+
+reader.readAsText(file)
+
+})
+
+document.getElementById("gas").addEventListener("input",render)
 
 </script>
 

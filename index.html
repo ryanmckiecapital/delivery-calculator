@@ -1,22 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Driver Earnings Tracker</title>
+<title>Delivery Earnings Tracker</title>
 
 <style>
 
 :root{
---bg:#121212;
---card:#1e1e1e;
---border:#2a2a2a;
---text:#f2f2f2;
+--bg:#0f172a;
+--card:#1e293b;
+--border:#334155;
+--text:#f8fafc;
 --green:#22c55e;
 --red:#ef4444;
+--blue:#3b82f6;
 --cash:#16a34a;
---cardblue:#2563eb;
 }
 
 *{
@@ -25,10 +23,10 @@ box-sizing:border-box;
 
 body{
 margin:0;
-font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
+padding:16px;
 background:var(--bg);
 color:var(--text);
-padding:16px;
+font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
 }
 
 .container{
@@ -41,14 +39,12 @@ gap:16px;
 
 .card{
 background:var(--card);
-border-radius:16px;
 padding:18px;
+border-radius:14px;
 border:1px solid var(--border);
-width:100%;
-overflow:hidden;
 }
 
-h1,h3{
+h2,h3{
 margin-top:0;
 }
 
@@ -64,63 +60,34 @@ font-weight:bold;
 margin-top:10px;
 }
 
-label{
-display:block;
-margin-top:10px;
-}
-
 input,select{
 width:100%;
 padding:12px;
+margin-top:6px;
 border-radius:10px;
 border:1px solid var(--border);
-margin-top:6px;
-background:#111;
+background:#020617;
 color:white;
 font-size:16px;
-}
-
-.date-wrapper{
-width:100%;
-position:relative;
-}
-
-.date-wrapper input{
-width:100%;
 }
 
 button{
+margin-top:12px;
 width:100%;
 padding:14px;
 border:none;
-border-radius:12px;
-margin-top:12px;
-background:linear-gradient(45deg,#4f9cff,#2563eb);
-color:white;
-font-weight:bold;
-font-size:16px;
-}
-
-.dashboard{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-margin-bottom:10px;
-}
-
-.dashboard div{
-background:#111;
-padding:10px;
 border-radius:10px;
-text-align:center;
+background:var(--blue);
+color:white;
+font-size:16px;
+font-weight:bold;
 }
 
 .delivery{
-border-bottom:1px solid var(--border);
-padding:10px 0;
 display:flex;
 justify-content:space-between;
-align-items:center;
+padding:10px 0;
+border-bottom:1px solid var(--border);
 }
 
 .badge{
@@ -130,20 +97,23 @@ font-size:11px;
 font-weight:bold;
 }
 
-.cash{background:var(--cash)}
-.cardbadge{background:var(--cardblue)}
+.cardbadge{background:var(--blue)}
+.cashbadge{background:var(--cash)}
+
+.green{color:var(--green)}
+.red{color:var(--red)}
 
 .chart{
-margin-top:10px;
 display:flex;
 align-items:flex-end;
 gap:6px;
-height:150px;
+height:140px;
+margin-top:10px;
 }
 
 .bar{
 flex:1;
-background:#4f9cff;
+background:#3b82f6;
 border-radius:4px 4px 0 0;
 position:relative;
 }
@@ -151,13 +121,10 @@ position:relative;
 .bar span{
 position:absolute;
 bottom:-18px;
-font-size:10px;
 left:50%;
 transform:translateX(-50%);
+font-size:10px;
 }
-
-.profitGreen{color:var(--green);font-weight:bold;}
-.profitRed{color:var(--red);font-weight:bold;}
 
 </style>
 </head>
@@ -168,27 +135,67 @@ transform:translateX(-50%);
 
 <div class="card">
 
-<h1>Driver Dashboard</h1>
+<h2>Driver Dashboard</h2>
 
-<div class="dashboard">
-
-<div>Company Payout<br><strong id="companyPayout">0</strong></div>
-<div>Deliveries<br><strong id="deliveries">0</strong></div>
-
+<div class="stat">
+<span>Company Payout</span>
+<span>$<span id="companyPayout">0</span></span>
 </div>
 
-<div class="stat"><span>Card Earnings</span><span>$<span id="cardTotal">0</span></span></div>
-<div class="stat"><span>Cash Earnings</span><span>$<span id="cashTotal">0</span></span></div>
-<div class="stat"><span>Tips</span><span>$<span id="tipsTotal">0</span></span></div>
+<div class="stat">
+<span>Card Earnings</span>
+<span>$<span id="cardTotal">0</span></span>
+</div>
+
+<div class="stat">
+<span>Cash Earnings</span>
+<span>$<span id="cashTotal">0</span></span>
+</div>
+
+<div class="stat">
+<span>Tips</span>
+<span>$<span id="tipsTotal">0</span></span>
+</div>
 
 <div class="stat">
 <span>Gas</span>
 <span>$ <input id="gas" type="number" value="0"></span>
 </div>
 
-<div class="stat"><span>Profit After Gas</span><span>$<span id="profit">0</span></span></div>
+<div class="stat">
+<span>Profit After Gas</span>
+<span>$<span id="profit">0</span></span>
+</div>
 
-<div class="total">Total Earnings: $<span id="grandTotal">0</span></div>
+<div class="total">
+Total Earnings: $<span id="grandTotal">0</span>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Add Delivery</h3>
+
+<label>Date</label>
+<input id="date" type="date">
+
+<label>Type</label>
+<select id="type">
+<option value="card">Card</option>
+<option value="cash">Cash</option>
+</select>
+
+<label>Delivery Fee</label>
+<input id="fee" type="number">
+
+<label>Tip</label>
+<input id="tip" type="number">
+
+<label>Service Fee</label>
+<input id="service" type="number">
+
+<button onclick="addDelivery()">Add Delivery</button>
 
 </div>
 
@@ -201,44 +208,7 @@ transform:translateX(-50%);
 
 <div class="card">
 
-<h3>Company Pay Period</h3>
-
-<div class="stat"><span>1–15 Payout</span><span>$<span id="pay1">0</span></span></div>
-<div class="stat"><span>16–End Payout</span><span>$<span id="pay2">0</span></span></div>
-
-</div>
-
-<div class="card">
-
-<label>Date</label>
-
-<div class="date-wrapper">
-<input id="date" type="date">
-</div>
-
-<label>Delivery Type</label>
-<select id="type">
-<option value="card">Card Delivery</option>
-<option value="cash">Cash Delivery</option>
-</select>
-
-<label>Delivery Fee</label>
-<input id="deliveryFee" type="number">
-
-<label>Tip</label>
-<input id="tip" type="number">
-
-<label>Service Fee</label>
-<input id="serviceFee" type="number">
-
-<button onclick="addDelivery()">Add Delivery</button>
-
-</div>
-
-<div class="card">
-
 <h3>Delivery History</h3>
-
 <div id="history"></div>
 
 </div>
@@ -248,137 +218,117 @@ transform:translateX(-50%);
 <script>
 
 let deliveries=[]
-let db
-
-let request=indexedDB.open("driverDB",1)
-
-request.onupgradeneeded=e=>{
-db=e.target.result
-db.createObjectStore("deliveries",{keyPath:"id",autoIncrement:true})
-}
-
-request.onsuccess=e=>{
-db=e.target.result
-loadData()
-}
-
-function loadData(){
-
-let tx=db.transaction("deliveries","readonly")
-let store=tx.objectStore("deliveries")
-
-store.getAll().onsuccess=e=>{
-deliveries=e.target.result
-render()
-}
-
-}
-
-function saveDelivery(data){
-
-let tx=db.transaction("deliveries","readwrite")
-tx.objectStore("deliveries").add(data)
-tx.oncomplete=loadData
-
-}
 
 function addDelivery(){
 
 let date=document.getElementById("date").value
 let type=document.getElementById("type").value
-let fee=parseFloat(document.getElementById("deliveryFee").value)||0
+let fee=parseFloat(document.getElementById("fee").value)||0
 let tip=parseFloat(document.getElementById("tip").value)||0
-let service=parseFloat(document.getElementById("serviceFee").value)||0
+let service=parseFloat(document.getElementById("service").value)||0
 
-let earning=0
+let driverEarn=0
+let companyCut=fee*0.20
 
 if(type==="card"){
 
-let companyCut=fee*0.20
-earning=(fee-companyCut)+tip
+driverEarn=(fee-companyCut)+tip
 
 }else{
 
-earning=fee+tip-service
+driverEarn=(fee-companyCut)-service+tip
 
 }
 
-saveDelivery({date,type,fee,tip,service,earning})
+deliveries.push({
+date,
+type,
+fee,
+tip,
+service,
+driverEarn,
+companyCut
+})
 
-document.getElementById("deliveryFee").value=""
+document.getElementById("fee").value=""
 document.getElementById("tip").value=""
-document.getElementById("serviceFee").value=""
+document.getElementById("service").value=""
+
+render()
 
 }
 
 function render(){
 
+let cardTotal=0
+let cashTotal=0
+let tips=0
+
+let cashCompanyCuts=0
+let cashServiceFees=0
+
 let history=document.getElementById("history")
 history.innerHTML=""
 
-let cardTotal=0
-let cashTotal=0
-let tipsTotal=0
-let serviceTotal=0
+let daily={}
 
-let pay1=0
-let pay2=0
-
-let dailyTotals={}
-
-deliveries.forEach(d=>{
-
-let badge=d.type==="cash"?"cash":"cardbadge"
-let label=d.type==="cash"?"CASH":"CARD"
+deliveries.forEach((d,i)=>{
 
 history.innerHTML+=`
-
 <div class="delivery">
-
 <div>
-
-<span class="badge ${badge}">${label}</span>
-<strong>$${d.earning.toFixed(2)}</strong>
+<span class="badge ${d.type==="cash"?"cashbadge":"cardbadge"}">${d.type}</span>
+<strong>$${d.driverEarn.toFixed(2)}</strong>
 <br>
 <small>${d.date}</small>
-
 </div>
-
-<button onclick="deleteDelivery(${d.id})">Delete</button>
-
+<button onclick="removeDelivery(${i})">Delete</button>
 </div>
-
 `
+
+tips+=d.tip
 
 if(d.type==="card"){
 
-cardTotal+=d.earning
-
-let day=new Date(d.date).getDate()
-
-if(day<=15) pay1+=d.earning
-else pay2+=d.earning
+cardTotal+=d.driverEarn
 
 }else{
 
-cashTotal+=d.earning
-serviceTotal+=d.service
+cashTotal+=d.driverEarn
+cashCompanyCuts+=d.companyCut
+cashServiceFees+=d.service
 
 }
 
-tipsTotal+=d.tip
-
-if(!dailyTotals[d.date]) dailyTotals[d.date]=0
-dailyTotals[d.date]+=d.earning
+if(!daily[d.date]) daily[d.date]=0
+daily[d.date]+=d.driverEarn
 
 })
+
+let companyPayout=cardTotal-(cashCompanyCuts+cashServiceFees)
+
+let grand=cardTotal+cashTotal
+
+let gas=parseFloat(document.getElementById("gas").value)||0
+
+let profit=grand-gas
+
+document.getElementById("cardTotal").innerText=cardTotal.toFixed(2)
+document.getElementById("cashTotal").innerText=cashTotal.toFixed(2)
+document.getElementById("tipsTotal").innerText=tips.toFixed(2)
+document.getElementById("companyPayout").innerText=companyPayout.toFixed(2)
+document.getElementById("grandTotal").innerText=grand.toFixed(2)
+
+let profitEl=document.getElementById("profit")
+profitEl.innerText=profit.toFixed(2)
+profitEl.className=profit>=0?"green":"red"
 
 let chart=document.getElementById("chart")
 chart.innerHTML=""
 
-let max=Math.max(...Object.values(dailyTotals),10)
+let max=Math.max(...Object.values(daily),10)
 
-Object.entries(dailyTotals).slice(-7).forEach(([date,total])=>{
+Object.entries(daily).slice(-7).forEach(([date,total])=>{
 
 let height=(total/max)*120
 
@@ -390,37 +340,12 @@ chart.innerHTML+=`
 
 })
 
-let companyPayout=cardTotal-serviceTotal
-
-pay1-=serviceTotal
-pay2-=serviceTotal
-
-let grand=cardTotal+cashTotal
-let gas=parseFloat(document.getElementById("gas").value)||0
-let profit=grand-gas
-
-document.getElementById("cardTotal").innerText=cardTotal.toFixed(2)
-document.getElementById("cashTotal").innerText=cashTotal.toFixed(2)
-document.getElementById("tipsTotal").innerText=tipsTotal.toFixed(2)
-document.getElementById("grandTotal").innerText=grand.toFixed(2)
-
-document.getElementById("deliveries").innerText=deliveries.length
-document.getElementById("companyPayout").innerText=companyPayout.toFixed(2)
-
-document.getElementById("pay1").innerText=pay1.toFixed(2)
-document.getElementById("pay2").innerText=pay2.toFixed(2)
-
-let profitEl=document.getElementById("profit")
-profitEl.innerText=profit.toFixed(2)
-profitEl.className=profit>=0?"profitGreen":"profitRed"
-
 }
 
-function deleteDelivery(id){
+function removeDelivery(i){
 
-let tx=db.transaction("deliveries","readwrite")
-tx.objectStore("deliveries").delete(id)
-tx.oncomplete=loadData
+deliveries.splice(i,1)
+render()
 
 }
 

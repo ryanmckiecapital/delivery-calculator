@@ -619,14 +619,15 @@ border: 1px solid var(–border);
 
 <!-- Calendar Overlay -->
 
-<div class="cal-overlay" id="calOverlay" onclick="closeCal()"></div>
-<div class="calendar-popup" id="calPopup">
-  <div class="cal-header">
-    <button class="cal-nav" onclick="calNav(-1)">‹</button>
-    <div class="cal-month" id="calMonthLabel"></div>
-    <button class="cal-nav" onclick="calNav(1)">›</button>
+<div class="cal-overlay" id="calOverlay" onclick="closeCal()">
+  <div class="calendar-popup" id="calPopup" onclick="event.stopPropagation()">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calNav(-1)">&#8249;</button>
+      <div class="cal-month" id="calMonthLabel"></div>
+      <button class="cal-nav" onclick="calNav(1)">&#8250;</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
   </div>
-  <div class="cal-grid" id="calGrid"></div>
 </div>
 
 <!-- Toast -->
@@ -660,11 +661,14 @@ function setDateInput(d) {
   document.getElementById('entryDate').value = formatDate(d);
 }
 function formatDate(d) {
-  return d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const dy = String(d.getDate()).padStart(2, '0');
+  return y + '-' + mo + '-' + dy;
 }
 function parseDate(s) {
-  const [y,m,dd] = s.split('-').map(Number);
-  return new Date(y, m-1, dd);
+  const parts = s.split('-');
+  return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
 }
 
 // ─── Type Selector ────────────────────────────────────
@@ -1024,23 +1028,12 @@ function clearAll() {
 
 // ─── Calendar ─────────────────────────────────────────
 function openCal() {
-  calDate = new Date(selectedDate);
+  calDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
   renderCal();
-  document.getElementById('calPopup').classList.add('open');
   document.getElementById('calOverlay').classList.add('open');
-  // Position near input
-  const input = document.getElementById('entryDate');
-  const rect = input.getBoundingClientRect();
-  const popup = document.getElementById('calPopup');
-  let top = rect.bottom + window.scrollY + 6;
-  let left = rect.left + window.scrollX;
-  if (left + 290 > window.innerWidth) left = window.innerWidth - 300;
-  popup.style.top = top + 'px';
-  popup.style.left = left + 'px';
 }
 
 function closeCal() {
-  document.getElementById('calPopup').classList.remove('open');
   document.getElementById('calOverlay').classList.remove('open');
 }
 

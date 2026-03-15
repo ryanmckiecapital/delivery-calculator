@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Driver Earnings Tracker</title>
 
 <style>
@@ -76,11 +74,6 @@ background:#111;
 color:white;
 box-sizing:border-box;
 font-size:16px;
-}
-
-input[type="date"]{
-appearance:none;
--webkit-appearance:none;
 }
 
 button{
@@ -221,16 +214,6 @@ transform:translateX(-50%);
 
 </div>
 
-
-<div class="card">
-
-<h3>Daily Earnings</h3>
-
-<div id="chart" class="chart"></div>
-
-</div>
-
-
 <div class="card">
 
 <h3>Company Pay Period</h3>
@@ -239,7 +222,6 @@ transform:translateX(-50%);
 <div class="stat"><span>16–End Payout</span><span>$<span id="pay2">0</span></span></div>
 
 </div>
-
 
 <div class="card">
 
@@ -265,20 +247,11 @@ transform:translateX(-50%);
 
 </div>
 
-
 <div class="card">
 
 <h3>Delivery History</h3>
 
 <div id="history"></div>
-
-<div class="pagination">
-
-<button class="pagebtn" onclick="prevPage()">⬅</button>
-<span id="pageInfo"></span>
-<button class="pagebtn" onclick="nextPage()">➡</button>
-
-</div>
 
 </div>
 
@@ -288,9 +261,6 @@ transform:translateX(-50%);
 
 let deliveries=[]
 let db
-let currentPage=1
-const perPage=10
-let startX=0
 
 let request=indexedDB.open("driverDB",1)
 
@@ -305,6 +275,7 @@ loadData()
 }
 
 function loadData(){
+
 let tx=db.transaction("deliveries","readonly")
 let store=tx.objectStore("deliveries")
 
@@ -312,12 +283,15 @@ store.getAll().onsuccess=e=>{
 deliveries=e.target.result
 render()
 }
+
 }
 
 function saveDelivery(data){
+
 let tx=db.transaction("deliveries","readwrite")
 tx.objectStore("deliveries").add(data)
 tx.oncomplete=loadData
+
 }
 
 function addDelivery(){
@@ -328,10 +302,18 @@ let fee=parseFloat(document.getElementById("deliveryFee").value)||0
 let tip=parseFloat(document.getElementById("tip").value)||0
 let service=parseFloat(document.getElementById("serviceFee").value)||0
 
-let companyCut=fee*0.20
-let earning=(fee-companyCut)+tip
+let earning=0
 
-if(type==="cash") earning-=service
+if(type==="card"){
+
+let companyCut=fee*0.20
+earning=(fee-companyCut)+tip
+
+}else{
+
+earning=fee+tip-service
+
+}
 
 saveDelivery({date,type,fee,tip,service,earning})
 
@@ -341,16 +323,7 @@ document.getElementById("serviceFee").value=""
 
 }
 
-function deleteDelivery(id){
-let tx=db.transaction("deliveries","readwrite")
-tx.objectStore("deliveries").delete(id)
-tx.oncomplete=loadData
-}
-
 function render(){
-
-let start=(currentPage-1)*perPage
-let page=deliveries.slice(start,start+perPage)
 
 let history=document.getElementById("history")
 history.innerHTML=""
@@ -363,9 +336,7 @@ let serviceTotal=0
 let pay1=0
 let pay2=0
 
-let dailyTotals={}
-
-page.forEach(d=>{
+deliveries.forEach(d=>{
 
 let badge=d.type==="cash"?"cash":"cardbadge"
 let label=d.type==="cash"?"CASH":"CARD"
@@ -376,9 +347,7 @@ history.innerHTML+=`
 
 <div class="deleteBtn" onclick="deleteDelivery(${d.id})">Delete</div>
 
-<div class="deliveryContent"
-ontouchstart="startSwipe(event)"
-ontouchmove="moveSwipe(event)">
+<div class="deliveryContent">
 
 <div>
 
@@ -394,10 +363,6 @@ ontouchmove="moveSwipe(event)">
 </div>
 
 `
-
-})
-
-deliveries.forEach(d=>{
 
 if(d.type==="card"){
 
@@ -417,29 +382,13 @@ serviceTotal+=d.service
 
 tipsTotal+=d.tip
 
-if(!dailyTotals[d.date]) dailyTotals[d.date]=0
-dailyTotals[d.date]+=d.earning
-
-})
-
-let chart=document.getElementById("chart")
-chart.innerHTML=""
-
-let max=Math.max(...Object.values(dailyTotals),10)
-
-Object.entries(dailyTotals).slice(-7).forEach(([date,total])=>{
-
-let height=(total/max)*120
-
-chart.innerHTML+=`
-<div class="bar" style="height:${height}px">
-<span>${new Date(date).getDate()}</span>
-</div>
-`
-
 })
 
 let companyPayout=cardTotal-serviceTotal
+
+pay1-=serviceTotal
+pay2-=serviceTotal
+
 let grand=cardTotal+cashTotal
 let gas=parseFloat(document.getElementById("gas").value)||0
 let profit=grand-gas
@@ -459,37 +408,13 @@ let profitEl=document.getElementById("profit")
 profitEl.innerText=profit.toFixed(2)
 profitEl.className=profit>=0?"profitGreen":"profitRed"
 
-let pages=Math.ceil(deliveries.length/perPage)||1
-document.getElementById("pageInfo").innerText=`Page ${currentPage}/${pages}`
-
 }
 
-function nextPage(){
-let pages=Math.ceil(deliveries.length/perPage)
-if(currentPage<pages){
-currentPage++
-render()
-}
-}
+function deleteDelivery(id){
 
-function prevPage(){
-if(currentPage>1){
-currentPage--
-render()
-}
-}
-
-function startSwipe(e){
-startX=e.touches[0].clientX
-}
-
-function moveSwipe(e){
-
-let diff=startX-e.touches[0].clientX
-
-if(diff>30){
-e.currentTarget.style.transform="translateX(-80px)"
-}
+let tx=db.transaction("deliveries","readwrite")
+tx.objectStore("deliveries").delete(id)
+tx.oncomplete=loadData
 
 }
 
